@@ -56,20 +56,50 @@ def parse_members(text):
         i += 1
     return members
 
-if __name__ == "__main__":
-    if "--from-file" in sys.argv:
-        raw = open(sys.argv[sys.argv.index("--from-file")+1], encoding="utf-8").read()
-    else:
-        raw = fetch(URL); time.sleep(cfg["delay_seconds"])
-        open("last_fetch.html","w",encoding="utf-8").write(raw)
-    text = html_to_text(raw) if "<html" in raw[:2000].lower() or "<div" in raw[:5000] else raw
-    members = parse_members(text)
-    if not members:
-        sys.exit("No members found. If the site loads members with JavaScript, copy the page text "
-                 "into page.txt and run: python scrape.py --from-file page.txt")
+def live_fetch():
+    for wait in cfg.get("retry_waits", [0, 30, 90]):
+        time.sleep(wait)
+        try:
+            return fetch(URL)
+        except Exception as e:
+            print(f"Live fetch failed: {e}", file=sys.stderr)
+    return None
+
+def save(members, note, extra=None):
     out = {"guild": cfg["guild"], "server": cfg["server"], "source": URL,
            "updated": datetime.date.today().isoformat(), "members": members}
+    out.update(extra or {})
     pathlib.Path("data").mkdir(exist_ok=True)
     json.dump(out, open("data/latest.json","w"), indent=1)
     json.dump(out, open(f"data/{out['updated']}.json","w"), indent=1)
-    print(f"{len(members)} members saved")
+    print(f"{len(members)} members saved ({note})")
+
+def to_text(raw):
+    return html_to_text(raw) if "<html" in raw[:2000].lower() or "<div" in raw[:5000] else raw
+
+if __name__ == "__main__":
+    import hashlib
+    if "--from-file" in sys.argv:
+        raw = open(sys.argv[sys.argv.index("--from-file")+1], encoding="utf-8").read()
+        members = parse_members(to_text(raw))
+        if not members: sys.exit("No members found in that file.")
+        save(members, "file"); sys.exit()
+    raw = live_fetch()
+    if raw:
+        members = parse_members(to_text(raw))
+        if members:
+            save(members, "live site"); sys.exit()
+        print("Live page had no member list.", file=sys.stderr)
+    p = pathlib.Path("page.txt")
+    if p.exists() and p.read_text(encoding="utf-8").strip():
+        txt = p.read_text(encoding="utf-8")
+        h = hashlib.sha256(txt.encode()).hexdigest()
+        lp = pathlib.Path("data/latest.json")
+        last = json.load(open(lp)).get("page_hash") if lp.exists() else None
+        members = parse_members(txt)
+        if members and h != last:
+            save(members, "page.txt", {"page_hash": h}); sys.exit()
+        print("page.txt unchanged or unreadable; keeping existing data.")
+    else:
+        print("No new data; keeping existing data.")
+    sys.exit(0)

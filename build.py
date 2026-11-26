@@ -60,6 +60,11 @@ dialog h3{{margin:0 0 4px;color:#ffb347;font-size:26px}} dialog .big{{font-size:
 <h2>Classes</h2>{cls_html}
 <h2>Members</h2><div style="overflow-x:auto"><table id=t><thead><tr><th>#</th><th>Character</th><th>Class</th><th>Level</th><th>Combat Power</th><th>Change since last update</th></tr></thead><tbody>{rows}</tbody></table></div></main>
 <footer>All guild statistics come from <a href="https://mapleidle.gg">MapleIdle.gg</a>, a fan-made project. Huge thanks to its creator for collecting and publishing this data. Unofficial fan site, not affiliated with Nexon or MapleIdle.gg. Source: <a href="{d['source']}">{E_(d['guild'])} on MapleIdle.gg</a>.</footer>
+<dialog id=pop></dialog>const pop=document.getElementById('pop');
+const mk=(t,c,x)=>{{const e=document.createElement(t);e.className=c;e.textContent=x;return e}};
+document.querySelector('#t tbody').addEventListener('click',e=>{{const b=e.target.closest('.nm');if(!b)return;
+pop.replaceChildren(mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' · Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power'));pop.showModal()}});
+pop.addEventListener('click',e=>{{if(e.target===pop)pop.close()}});
 <script>
 document.querySelectorAll('th').forEach((h,i)=>{{let asc=false;h.onclick=()=>{{asc=!asc;const b=document.querySelector('#t tbody'),r=[...b.rows];
 const v=x=>x.cells[i].dataset.v??x.cells[i].textContent,n=r.every(x=>v(x)!==''&&!isNaN(v(x)));

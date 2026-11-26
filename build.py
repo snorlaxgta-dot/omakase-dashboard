@@ -51,7 +51,10 @@ th{{color:#ffb347;cursor:pointer;user-select:none}} tr:hover td{{background:#1d2
 .cpbar{{position:absolute;left:0;top:0;bottom:0;background:#ffb34722;z-index:0}}
 td:nth-child(5){{white-space:nowrap}}
 footer{{padding:20px 5vw;color:#6d7499;font-size:13px}}
-</style>
+.nm{{background:none;border:0;color:#9db4ff;font:inherit;cursor:pointer;padding:0}} .nm:hover{{text-decoration:underline}}
+dialog{{background:#171a2b;color:#e6e6ef;border:1px solid #2a2f55;border-radius:14px;padding:26px 34px;min-width:260px;text-align:center}}
+dialog::backdrop{{background:#000a}}
+dialog h3{{margin:0 0 4px;color:#ffb347;font-size:26px}} dialog .big{{font-size:30px;color:#ffb347;margin:14px 0 4px}} dialog .meta{{color:#8c93b8}}</style>
 <header><h1>{E_(d['guild'])}</h1><div class=sub>{d['server'].title()} · updated {d['updated']}</div></header>
 <main><div class=cards>{cards}</div>
 <h2>Classes</h2>{cls_html}

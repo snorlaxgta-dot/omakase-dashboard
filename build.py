@@ -25,12 +25,11 @@ cls_html = "".join(f"<div class=bar><span>{E_(c)}</span><i style='width:{n/class
 rows = ""
 for m in ms:
     old = prev.get(m["name"]); delta = ""
-    if old: 
+    if old:
         dd = m["cp"] - old["cp"]; delta = ("+" if dd >= 0 else "-") + fmt(abs(dd)) if dd else "0"
     elif prev: delta = "new"
-    link = f"{d['source'].split('/guild/')[0]}/characters/{d['server']}/{E_(m['name'])}"
     role = f" <small>{E_(m['role'])}</small>" if m["role"] else ""
-    rows += (f"<tr><td data-v={m['rank']}>{m['rank']}</td><td data-v='{E_(m['name'].lower())}'><button class=nm data-n='{E_(m['name'])}' data-c='{E_(m['class'])}' data-l='{m['level']}' data-cp='{E_(m['cp_text'])}'>{E_(m['name'])}</button></td>"
+    rows += (f"<tr><td data-v={m['rank']}>{m['rank']}</td><td data-v='{E_(m['name'].lower())}'><button class=nm data-n='{E_(m['name'])}' data-c='{E_(m['class'])}' data-l='{m['level']}' data-cp='{E_(m['cp_text'])}'>{E_(m['name'])}</button>{role}</td>"
       f"<td data-v='{E_(m['class'])}'>{E_(m['class'])}</td><td data-v={m['level']}>{m['level']}</td>"
       f"<td data-v={m['cp']}><div class=cpbar style='width:{m['cp']/mx*100:.1f}%'></div>{m['cp_text']}</td><td>{delta}</td></tr>")
 page = f"""<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
@@ -54,20 +53,22 @@ footer{{padding:20px 5vw;color:#6d7499;font-size:13px}}
 .nm{{background:none;border:0;color:#9db4ff;font:inherit;cursor:pointer;padding:0}} .nm:hover{{text-decoration:underline}}
 dialog{{background:#171a2b;color:#e6e6ef;border:1px solid #2a2f55;border-radius:14px;padding:26px 34px;min-width:260px;text-align:center}}
 dialog::backdrop{{background:#000a}}
-dialog h3{{margin:0 0 4px;color:#ffb347;font-size:26px}} dialog .big{{font-size:30px;color:#ffb347;margin:14px 0 4px}} dialog .meta{{color:#8c93b8}}</style>
+dialog h3{{margin:0 0 4px;color:#ffb347;font-size:26px}} dialog .big{{font-size:30px;color:#ffb347;margin:14px 0 4px}} dialog .meta{{color:#8c93b8}}
+</style>
 <header><h1>{E_(d['guild'])}</h1><div class=sub>{d['server'].title()} · updated {d['updated']}</div></header>
 <main><div class=cards>{cards}</div>
 <h2>Classes</h2>{cls_html}
 <h2>Members</h2><div style="overflow-x:auto"><table id=t><thead><tr><th>#</th><th>Character</th><th>Class</th><th>Level</th><th>Combat Power</th><th>Change since last update</th></tr></thead><tbody>{rows}</tbody></table></div></main>
 <footer>All guild statistics come from <a href="https://mapleidle.gg">MapleIdle.gg</a>, a fan-made project. Huge thanks to its creator for collecting and publishing this data. Unofficial fan site, not affiliated with Nexon or MapleIdle.gg. Source: <a href="{d['source']}">{E_(d['guild'])} on MapleIdle.gg</a>.</footer>
-<dialog id=pop></dialog>const pop=document.getElementById('pop');
-const mk=(t,c,x)=>{{const e=document.createElement(t);e.className=c;e.textContent=x;return e}};
-document.querySelector('#t tbody').addEventListener('click',e=>{{const b=e.target.closest('.nm');if(!b)return;
-pop.replaceChildren(mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' · Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power'));pop.showModal()}});
-pop.addEventListener('click',e=>{{if(e.target===pop)pop.close()}});
+<dialog id=pop></dialog>
 <script>
 document.querySelectorAll('th').forEach((h,i)=>{{let asc=false;h.onclick=()=>{{asc=!asc;const b=document.querySelector('#t tbody'),r=[...b.rows];
 const v=x=>x.cells[i].dataset.v??x.cells[i].textContent,n=r.every(x=>v(x)!==''&&!isNaN(v(x)));
 r.sort((a,b)=>(n?v(a)-v(b):v(a).localeCompare(v(b)))*(asc?1:-1)*(n&&i==4||n&&i==3?-1:1));r.forEach(x=>b.append(x))}}}});
+const pop=document.getElementById('pop');
+const mk=(t,c,x)=>{{const e=document.createElement(t);e.className=c;e.textContent=x;return e}};
+document.querySelector('#t tbody').addEventListener('click',e=>{{const b=e.target.closest('.nm');if(!b)return;
+pop.replaceChildren(mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' · Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power'));pop.showModal()}});
+pop.addEventListener('click',e=>{{if(e.target===pop)pop.close()}});
 </script>"""
 open("docs/index.html","w",encoding="utf-8").write(page); print("built docs/index.html")

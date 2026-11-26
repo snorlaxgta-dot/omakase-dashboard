@@ -30,7 +30,7 @@ for m in ms:
     elif prev: delta = "new"
     link = f"{d['source'].split('/guild/')[0]}/characters/{d['server']}/{E_(m['name'])}"
     role = f" <small>{E_(m['role'])}</small>" if m["role"] else ""
-    rows += (f"<tr><td data-v={m['rank']}>{m['rank']}</td><td data-v='{E_(m['name'].lower())}'>{E_(m['name'])}{role}</td>"
+    rows += (f"<tr><td data-v={m['rank']}>{m['rank']}</td><td data-v='{E_(m['name'].lower())}'><button class=nm data-n='{E_(m['name'])}' data-c='{E_(m['class'])}' data-l='{m['level']}' data-cp='{E_(m['cp_text'])}'>{E_(m['name'])}</button></td>"
       f"<td data-v='{E_(m['class'])}'>{E_(m['class'])}</td><td data-v={m['level']}>{m['level']}</td>"
       f"<td data-v={m['cp']}><div class=cpbar style='width:{m['cp']/mx*100:.1f}%'></div>{m['cp_text']}</td><td>{delta}</td></tr>")
 page = f"""<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">

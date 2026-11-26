@@ -1,0 +1,154 @@
+Members (30)
+Character	Level	Combat Power
+1	
+
+Chilaquiles
+Fire/Poison Mage
+122	714AA 470T
+2	
+
+RockyWolves
+Ice/Lightning Mage
+120	153AA 835T
+3	
+
+Korpzed
+Shadower
+119	69AA 866T
+4	
+
+LilSquishy
+Bishop
+116	66AA 948T
+5	
+
+PsyNyx
+Shadower
+117	64AA 245T
+6	
+
+XxSinerknGxX
+Shadower
+118	58AA 106T
+7	
+
+BagDeleter
+Buccaneer
+119	55AA 940T
+8	
+
+NotRenkki
+Bowmaster
+119	54AA 616T
+9	
+
+Anytony
+Leader
+Fire/Poison Mage
+119	41AA 143T
+10	
+
+Lockon52
+Buccaneer
+118	33AA 948T
+11	
+
+JayRoller
+Fire/Poison Mage
+116	28AA 230T
+12	
+
+VoidLord
+Shadower
+116	13AA 795T
+13	
+
+Churbz
+Night Lord
+115	13AA 276T
+14	
+
+Cloud1224
+Bishop
+114	13AA 92T
+15	
+
+Cafeplaza
+Fire/Poison Mage
+115	12AA 118T
+16	
+
+Lilikoi206
+Marksman
+115	11AA 498T
+17	
+
+Sere
+Marksman
+115	10AA 855T
+18	
+
+HealBeach
+Bishop
+116	10AA 716T
+19	
+
+Harrygor
+Paladin
+115	10AA 437T
+20	
+
+Blueblade11
+Buccaneer
+115	10AA 53T
+21	
+
+Soreasy
+Bowmaster
+116	9AA 863T
+22	
+
+fishyyyy
+Ice/Lightning Mage
+115	9AA 731T
+23	
+
+jcteee
+Marksman
+115	8AA 395T
+24	
+
+DeeFameMee
+Paladin
+115	8AA 7T
+25	
+
+KonoYlwFlash
+Night Lord
+113	6AA 942T
+26	
+
+Teslar
+Night Lord
+115	6AA 793T
+27	
+
+Brolyy
+Night Lord
+114	6AA 656T
+28	
+
+pizookie
+Shadower
+115	6AA 440T
+29	
+
+patatoe
+Marksman
+114	6AA 218T
+30	
+
+BurnVictim
+Fire/Poison Mage
+114	3AA 550T
+History

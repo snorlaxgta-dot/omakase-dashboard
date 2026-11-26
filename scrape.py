@@ -1,4 +1,5 @@
 """Fetch the guild page once, parse members, save data/latest.json + dated snapshot.
+Also fetches each member's fashion sprite into docs/fashion/ and writes data/fashion.json.
 Usage:
   python scrape.py                      fetch from mapleidle.gg
   python scrape.py --from-file x.txt    parse a page you copy-pasted into a text file
@@ -9,6 +10,11 @@ cfg = json.load(open("config.json"))
 URL = f"{cfg['base']}/guild/{cfg['server']}/{cfg['guild']}"
 UNITS = {"T": 1, "AA": 1000, "AB": 10**6, "AC": 10**9}   # in trillions
 
+FASHION_DIR = pathlib.Path("docs/fashion")
+FASHION_JSON = pathlib.Path("data/fashion.json")
+SPRITE_RE = re.compile(r"https://cdn\.mapleidle\.gg/sprites/[0-9a-f]+\.png")
+FASHION_DELAY = 1.0   # seconds between requests
+
 def cp_to_num(s):
     return sum(int(n) * UNITS[u] for n, u in re.findall(r"(\d+)\s*(AC|AB|AA|T)", s))
 
@@ -16,6 +22,11 @@ def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": cfg["user_agent"]})
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read().decode("utf-8", "replace")
+
+def fetch_bytes(url):
+    req = urllib.request.Request(url, headers={"User-Agent": cfg["user_agent"]})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
 
 class ToText(HTMLParser):
     BLOCK = {"tr","td","th","div","p","li","br","h1","h2","h3","a","span","section","table"}
@@ -65,6 +76,70 @@ def live_fetch():
             print(f"Live fetch failed: {e}", file=sys.stderr)
     return None
 
+def fashion_page_url(name):
+    return f"{cfg['base']}/characters/{cfg['server']}/{name}/fashion"
+
+def fashion_for(name):
+    """Scrape one member's fashion page. Returns the sprite URL or None.
+
+    Regexes the RAW html, not html_to_text() output: the sprite lives in a
+    src="..." attribute, and ToText drops attributes entirely.
+    """
+    for wait in (0, 30):
+        time.sleep(wait)
+        try:
+            raw = fetch(fashion_page_url(name))
+        except Exception as e:
+            print(f"  fashion page failed for {name}: {e}", file=sys.stderr)
+            continue
+        m = SPRITE_RE.search(raw)
+        if m:
+            return m.group(0)
+        print(f"  no sprite url found for {name}", file=sys.stderr)
+        return None
+    return None
+
+def refresh_fashion(members, today):
+    """Download each member's fit sprite into docs/fashion/ and write data/fashion.json."""
+    FASHION_DIR.mkdir(parents=True, exist_ok=True)
+    FASHION_JSON.parent.mkdir(parents=True, exist_ok=True)
+
+    old = json.load(open(FASHION_JSON)) if FASHION_JSON.exists() else {}
+    out, saved, kept = {}, 0, 0
+
+    for i, m in enumerate(members, 1):
+        name = m["name"]
+        slug = name.lower()
+        print(f"[{i}/{len(members)}] fashion: {name}")
+
+        url = fashion_for(name)
+        if not url:
+            if slug in old:                      # keep last known good
+                out[slug] = old[slug]; kept += 1
+            time.sleep(FASHION_DELAY); continue
+
+        dest = FASHION_DIR / f"{slug}.png"
+        try:
+            blob = fetch_bytes(url)
+        except Exception as e:
+            print(f"  sprite download failed for {name}: {e}", file=sys.stderr)
+            if slug in old:
+                out[slug] = old[slug]; kept += 1
+            time.sleep(FASHION_DELAY); continue
+
+        # only rewrite when the bytes actually differ -> clean commits
+        if not dest.exists() or dest.read_bytes() != blob:
+            dest.write_bytes(blob); saved += 1
+            print(f"  saved {name} ({len(blob)} bytes)")
+        else:
+            print(f"  unchanged {name}")
+
+        out[slug] = {"name": name, "image": f"fashion/{slug}.png", "updated": today}
+        time.sleep(FASHION_DELAY)
+
+    json.dump(out, open(FASHION_JSON, "w"), indent=1)
+    print(f"fashion: {saved} new/changed, {kept} kept from previous run")
+
 def save(members, note, extra=None):
     out = {"guild": cfg["guild"], "server": cfg["server"], "source": URL,
            "updated": datetime.date.today().isoformat(), "members": members}
@@ -73,6 +148,7 @@ def save(members, note, extra=None):
     json.dump(out, open("data/latest.json","w"), indent=1)
     json.dump(out, open(f"data/{out['updated']}.json","w"), indent=1)
     print(f"{len(members)} members saved ({note})")
+    refresh_fashion(members, out["updated"])
 
 def to_text(raw):
     return html_to_text(raw) if "<html" in raw[:2000].lower() or "<div" in raw[:5000] else raw

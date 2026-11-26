@@ -43,7 +43,7 @@ page = f"""<!doctype html><meta charset=utf-8><meta name=viewport content="width
 body{{margin:0;color:var(--ink);font:15px/1.5 Nunito,system-ui,sans-serif;background-color:var(--bg);background-image:radial-gradient(900px 420px at 50% 0,#6a2f5640,transparent),linear-gradient(#1a1226,#1f1320 45%,#150f13);background-attachment:fixed}}
 .banner,header,main{{max-width:1180px;margin:0 auto;padding-inline:5vw;box-sizing:content-box}}
 .banner{{padding-top:20px}}
-.banner img{{display:block;width:100%;height:auto;border:2px solid var(--gold2);border-radius:16px;box-shadow:0 12px 40px #000a,0 0 0 6px #2d1d15}}
+.banner img{{display:block;width:100%;height:220px;object-fit:cover;object-position:50% 35%;border:2px solid var(--gold2);
 header{{padding-top:22px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 18px}}
 h1{{margin:0;font:700 24px/1.2 Cinzel,Georgia,serif;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}}
 .sub{{color:var(--muted)}}

@@ -5,3 +5,6 @@
  "delay_seconds": 3,
  "user_agent": "OmakaseGuildDashboard/1.0 (+https://snorlaxgta-dot.github.io/omakase-dashboard/)"
 }
+"score_pages": {
+  "conquest": "https://mapleidle.gg/tools/score-analysis?kind=guild&region=bera&name=Omakase"
+}

@@ -1,5 +1,6 @@
 """Fetch the guild page once, parse members, save data/latest.json + dated snapshot.
-Also fetches each member's fashion sprite into docs/fashion/ and writes data/fashion.json.
+Also refreshes a few members' fashion sprites per run (rotating), writing data/fashion.json.
+Polite by design: 1 guild request, then FASHION_PER_RUN member pages + their images.
 Usage:
   python scrape.py                      fetch from mapleidle.gg
   python scrape.py --from-file x.txt    parse a page you copy-pasted into a text file
@@ -13,20 +14,40 @@ UNITS = {"T": 1, "AA": 1000, "AB": 10**6, "AC": 10**9}   # in trillions
 FASHION_DIR = pathlib.Path("docs/fashion")
 FASHION_JSON = pathlib.Path("data/fashion.json")
 SPRITE_RE = re.compile(r"https://cdn\.mapleidle\.gg/sprites/[0-9a-f]+\.png")
-FASHION_DELAY = 1.0   # seconds between requests
+FASHION_DELAY = 3.0        # seconds between requests (config delay_seconds)
+FASHION_PER_RUN = 5        # members refreshed per night -> full cycle every 6 days
+ROTATION_FILE = pathlib.Path("data/fashion_rotation.txt")
 
 def cp_to_num(s):
     return sum(int(n) * UNITS[u] for n, u in re.findall(r"(\d+)\s*(AC|AB|AA|T)", s))
 
+class RateLimited(Exception):
+    """mapleidle said 429 - stop knocking and try again next run."""
+
+
+def is_rate_limit(e):
+    return getattr(e, "code", None) == 429 or "429" in str(e)
+
+
 def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": cfg["user_agent"]})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read().decode("utf-8", "replace")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        if is_rate_limit(e):
+            raise RateLimited(f"{e} for {url}") from None
+        raise
 
 def fetch_bytes(url):
     req = urllib.request.Request(url, headers={"User-Agent": cfg["user_agent"]})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read()
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        if is_rate_limit(e):
+            raise RateLimited(f"{e} for {url}") from None
+        raise
 
 class ToText(HTMLParser):
     BLOCK = {"tr","td","th","div","p","li","br","h1","h2","h3","a","span","section","table"}
@@ -68,13 +89,15 @@ def parse_members(text):
     return members
 
 def live_fetch():
-    for wait in cfg.get("retry_waits", [0, 30, 90]):
-        time.sleep(wait)
-        try:
-            return fetch(URL)
-        except Exception as e:
-            print(f"Live fetch failed: {e}", file=sys.stderr)
-    return None
+    """One attempt. No tight retry loop: hammering a 429 window makes it worse."""
+    try:
+        return fetch(URL)
+    except RateLimited as e:
+        print(f"Rate limited (429): {e}", file=sys.stderr)
+        return None
+    except Exception as e:
+        print(f"Live fetch failed: {e}", file=sys.stderr)
+        return None
 
 def fashion_page_url(name):
     return f"{cfg['base']}/characters/{cfg['server']}/{name}/fashion"
@@ -85,19 +108,43 @@ def fashion_for(name):
     Regexes the RAW html, not html_to_text() output: the sprite lives in a
     src="..." attribute, and ToText drops attributes entirely.
     """
-    for wait in (0, 30):
-        time.sleep(wait)
-        try:
-            raw = fetch(fashion_page_url(name))
-        except Exception as e:
-            print(f"  fashion page failed for {name}: {e}", file=sys.stderr)
-            continue
-        m = SPRITE_RE.search(raw)
-        if m:
-            return m.group(0)
-        print(f"  no sprite url found for {name}", file=sys.stderr)
+    try:
+        raw = fetch(fashion_page_url(name))
+    except RateLimited:
+        raise
+    except Exception as e:
+        print(f"  fashion page failed for {name}: {e}", file=sys.stderr)
         return None
+    m = SPRITE_RE.search(raw)
+    if m:
+        return m.group(0)
+    print(f"  no sprite url found for {name}", file=sys.stderr)
     return None
+
+def read_rotation():
+    if ROTATION_FILE.exists():
+        try:
+            return int(ROTATION_FILE.read_text().strip() or 0)
+        except ValueError:
+            return 0
+    return 0
+
+
+def write_rotation(n):
+    ROTATION_FILE.parent.mkdir(parents=True, exist_ok=True)
+    ROTATION_FILE.write_text(str(n))
+
+
+def next_batch(members, count):
+    """The next `count` members in a rotating cycle, so each gets refreshed in turn."""
+    if not members:
+        return []
+    count = min(count, len(members))
+    start = read_rotation() % len(members)
+    idx = [(start + i) % len(members) for i in range(count)]
+    write_rotation((start + count) % len(members))
+    return [members[i] for i in idx]
+
 
 def refresh_fashion(members, today):
     """Download each member's fit sprite into docs/fashion/ and write data/fashion.json."""
@@ -105,26 +152,40 @@ def refresh_fashion(members, today):
     FASHION_JSON.parent.mkdir(parents=True, exist_ok=True)
 
     old = json.load(open(FASHION_JSON)) if FASHION_JSON.exists() else {}
-    out, saved, kept = {}, 0, 0
+    out, saved, kept = dict(old), 0, 0          # start from what we already have
+    all_names = [m["name"] for m in members]
 
-    for i, m in enumerate(members, 1):
+    for name in all_names:
+        slug = name.lower()
+        if slug not in out:
+            out[slug] = {"name": name, "image": f"fashion/{slug}.png", "updated": today}
+
+    batch = next_batch(members, FASHION_PER_RUN)
+    print(f"fashion: refreshing {len(batch)} of {len(members)} members this run")
+
+    for i, m in enumerate(batch, 1):
         name = m["name"]
         slug = name.lower()
-        print(f"[{i}/{len(members)}] fashion: {name}")
+        print(f"[{i}/{len(batch)}] fashion: {name}")
 
-        url = fashion_for(name)
+        try:
+            url = fashion_for(name)
+        except RateLimited as e:
+            print(f"  rate limited - stopping fashion refresh: {e}", file=sys.stderr)
+            break
+
         if not url:
-            if slug in old:                      # keep last known good
-                out[slug] = old[slug]; kept += 1
+            kept += 1
             time.sleep(FASHION_DELAY); continue
 
         dest = FASHION_DIR / f"{slug}.png"
         try:
             blob = fetch_bytes(url)
+        except RateLimited as e:
+            print(f"  rate limited - stopping fashion refresh: {e}", file=sys.stderr)
+            break
         except Exception as e:
             print(f"  sprite download failed for {name}: {e}", file=sys.stderr)
-            if slug in old:
-                out[slug] = old[slug]; kept += 1
             time.sleep(FASHION_DELAY); continue
 
         # only rewrite when the bytes actually differ -> clean commits
@@ -138,7 +199,8 @@ def refresh_fashion(members, today):
         time.sleep(FASHION_DELAY)
 
     json.dump(out, open(FASHION_JSON, "w"), indent=1)
-    print(f"fashion: {saved} new/changed, {kept} kept from previous run")
+    print(f"fashion: {saved} new/changed, {kept} skipped; "
+          f"{(len(old))} entries retained in data/fashion.json")
 
 def save(members, note, extra=None):
     out = {"guild": cfg["guild"], "server": cfg["server"], "source": URL,

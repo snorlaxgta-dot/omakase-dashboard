@@ -121,7 +121,7 @@ dialog h3{margin:0 0 4px;color:var(--gold);font:700 26px Cinzel,Georgia,serif} d
 <footer>Data from <a href="https://mapleidle.gg">MapleIdle.gg</a>. Unofficial fan site.</footer></div>
 <dialog id=pop></dialog>
 <script>
-const FASHION = {"chilaquiles": {"name": "Chilaquiles", "image": "fashion/chilaquiles.png", "updated": "2026-11-27"}, "rockywolves": {"name": "RockyWolves", "image": "fashion/rockywolves.png", "updated": "2026-11-27"}, "korpzed": {"name": "Korpzed", "image": "fashion/korpzed.png", "updated": "2026-11-27"}, "lilsquishy": {"name": "LilSquishy", "image": "fashion/lilsquishy.png", "updated": "2026-11-27"}, "psynyx": {"name": "PsyNyx", "image": "fashion/psynyx.png", "updated": "2026-11-27"}, "xxsinerkngxx": {"name": "XxSinerknGxX", "image": "fashion/xxsinerkngxx.png", "updated": "2026-11-27"}, "bagdeleter": {"name": "BagDeleter", "image": "fashion/bagdeleter.png", "updated": "2026-11-27"}, "notrenkki": {"name": "NotRenkki", "image": "fashion/notrenkki.png", "updated": "2026-11-27"}, "anytony": {"name": "Anytony", "image": "fashion/anytony.png", "updated": "2026-11-27"}, "lockon52": {"name": "Lockon52", "image": "fashion/lockon52.png", "updated": "2026-11-27"}, "jayroller": {"name": "JayRoller", "image": "fashion/jayroller.png", "updated": "2026-11-27"}, "voidlord": {"name": "VoidLord", "image": "fashion/voidlord.png", "updated": "2026-11-27"}, "churbz": {"name": "Churbz", "image": "fashion/churbz.png", "updated": "2026-11-27"}, "cloud1224": {"name": "Cloud1224", "image": "fashion/cloud1224.png", "updated": "2026-11-27"}, "cafeplaza": {"name": "Cafeplaza", "image": "fashion/cafeplaza.png", "updated": "2026-11-27"}, "lilikoi206": {"name": "Lilikoi206", "image": "fashion/lilikoi206.png", "updated": "2026-11-27"}, "sere": {"name": "Sere", "image": "fashion/sere.png", "updated": "2026-11-27"}, "healbeach": {"name": "HealBeach", "image": "fashion/healbeach.png", "updated": "2026-11-27"}, "harrygor": {"name": "Harrygor", "image": "fashion/harrygor.png", "updated": "2026-11-27"}, "blueblade11": {"name": "Blueblade11", "image": "fashion/blueblade11.png", "updated": "2026-11-27"}, "soreasy": {"name": "Soreasy", "image": "fashion/soreasy.png", "updated": "2026-11-27"}, "fishyyyy": {"name": "fishyyyy", "image": "fashion/fishyyyy.png", "updated": "2026-11-27"}, "jcteee": {"name": "jcteee", "image": "fashion/jcteee.png", "updated": "2026-11-27"}, "deefamemee": {"name": "DeeFameMee", "image": "fashion/deefamemee.png", "updated": "2026-11-27"}, "konoylwflash": {"name": "KonoYlwFlash", "image": "fashion/konoylwflash.png", "updated": "2026-11-27"}, "teslar": {"name": "Teslar", "image": "fashion/teslar.png", "updated": "2026-11-27"}, "brolyy": {"name": "Brolyy", "image": "fashion/brolyy.png", "updated": "2026-11-27"}, "pizookie": {"name": "pizookie", "image": "fashion/pizookie.png", "updated": "2026-11-27"}, "patatoe": {"name": "patatoe", "image": "fashion/patatoe.png", "updated": "2026-11-27"}, "burnvictim": {"name": "BurnVictim", "image": "fashion/burnvictim.png", "updated": "2026-11-27"}};
+const FASHION = {};
 const secs=[...document.querySelectorAll('.sec')],links=[...document.querySelectorAll('nav a[data-s]')];
 function route(){const h=(location.hash||'#home').slice(1),id=secs.some(s=>s.id===h)?h:'home';
   secs.forEach(s=>s.classList.toggle('on',s.id===id));links.forEach(a=>a.classList.toggle('on',a.dataset.s===id));window.scrollTo(0,0)}
@@ -145,13 +145,14 @@ lq.oninput=()=>{const s=lq.value.trim().toLowerCase();document.querySelectorAll(
 
 const pop=document.getElementById('pop');
 const mk=(t,c,x)=>{const e=document.createElement(t);e.className=c;e.textContent=x;return e};
-const mkImg=(s,a)=>{const i=document.createElement('img');i.src=s;i.alt=a||'';i.loading='lazy';return i};
 document.addEventListener('click',e=>{const b=e.target.closest('.nm');if(!b)return;
   const nodes=[mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' \u00b7 Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power \u00b7 Rank #'+b.dataset.r)];
   const f=FASHION[(b.dataset.n||'').toLowerCase()];
   if(f&&f.image){const w=document.createElement('div');w.className='fit';
-    w.appendChild(mkImg(f.image,b.dataset.n+"'s latest fit"));
-    nodes.push(w,mk('p','fitdate','Fit updated '+f.updated));}
+    const img=document.createElement('img');img.alt=b.dataset.n+"'s latest fit";img.src=f.image;
+    const dt=mk('p','fitdate','Fit updated '+f.updated);
+    img.onerror=()=>{w.remove();dt.remove()};   // if a picture fails to load, hide it instead of showing a broken icon
+    w.appendChild(img);nodes.push(w,dt);}
   pop.replaceChildren(...nodes);pop.showModal()});
 pop.addEventListener('click',e=>{if(e.target===pop)pop.close()});
 </script>

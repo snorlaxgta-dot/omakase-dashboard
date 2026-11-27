@@ -6,6 +6,7 @@ and the matching category pages fill in by themselves.
 """
 import json, glob, html, statistics, collections, math
 d = json.load(open("data/latest.json")); ms = d["members"]
+fashion = json.load(open("data/fashion.json")) if glob.glob("data/fashion.json") else {}
 E_ = html.escape
 
 def fmt(t):
@@ -171,14 +172,9 @@ td:nth-child(5){white-space:nowrap}
 footer{max-width:1020px;margin:0 auto;padding:6px 28px 40px;color:#8f7d68;font-size:13px}
 dialog{background:linear-gradient(var(--wood),var(--wood2));color:var(--ink);border:2px solid var(--gold2);border-radius:16px;padding:26px 36px;min-width:260px;text-align:center;box-shadow:0 20px 60px #000a}
 dialog::backdrop{background:#0d0810cc}
-dialog .rank{margin:14px 0 0;display:flex;align-items:center;justify-content:center;gap:10px}
-dialog .rank .crown{font-size:44px;line-height:1}
-dialog .rank .ranklabel{font:600 15px Cinzel,Georgia,serif;letter-spacing:.08em;text-transform:uppercase}
-dialog .rank.r1 .ranklabel{color:var(--gold)}
-dialog .rank.r1 .crown{filter:drop-shadow(0 0 10px #f2c04aaa)}
-dialog .rank.r2 .ranklabel{color:#d8dbe6}
-dialog .rank.r3 .ranklabel{color:#d38a4f}
-dialog .rank.rN .ranklabel{color:var(--muted)}
+dialog .fit{margin:14px auto 2px}
+dialog .fit img{max-height:min(52vh,420px);max-width:100%;height:auto;border-radius:10px;image-rendering:pixelated;background:#2a1c14}
+dialog .fitdate{color:#8f7d68;font-size:12px;margin:4px 0 0}
 dialog h3{margin:0 0 4px;color:var(--gold);font:700 26px Cinzel,Georgia,serif} dialog .big{font:700 30px Cinzel,Georgia,serif;color:var(--gold);margin:14px 0 4px} dialog .meta{color:var(--muted)}
 @media (max-width:820px){
   body{display:block}
@@ -237,6 +233,7 @@ __CATSECS__
 <footer>Data from <a href="https://mapleidle.gg">MapleIdle.gg</a>. Unofficial fan site.</footer></div>
 <dialog id=pop></dialog>
 <script>
+const FASHION = __FASHION__;
 const secs=[...document.querySelectorAll('.sec')],links=[...document.querySelectorAll('nav a[data-s]')];
 function route(){const h=(location.hash||'#home').slice(1),id=secs.some(s=>s.id===h)?h:'home';
   secs.forEach(s=>s.classList.toggle('on',s.id===id));links.forEach(a=>a.classList.toggle('on',a.dataset.s===id));window.scrollTo(0,0)}
@@ -260,13 +257,14 @@ lq.oninput=()=>{const s=lq.value.trim().toLowerCase();document.querySelectorAll(
 
 const pop=document.getElementById('pop');
 const mk=(t,c,x)=>{const e=document.createElement(t);e.className=c;e.textContent=x;return e};
-const RANK_ART={'1':{i:'\U0001F451',c:'r1'},'2':{i:'\U0001F948',c:'r2'},'3':{i:'\U0001F949',c:'r3'}};
+const mkImg=(s,a)=>{const i=document.createElement('img');i.src=s;i.alt=a||'';i.loading='lazy';return i};
 document.addEventListener('click',e=>{const b=e.target.closest('.nm');if(!b)return;
-  const r=String(b.dataset.r),a=RANK_ART[r];
-  const rank=document.createElement('div');rank.className='rank '+(a?a.c:'rN');
-  if(a)rank.appendChild(mk('span','crown',a.i));
-  rank.appendChild(mk('span','ranklabel',a?'Guild Rank #'+r:'Guild Rank #'+r));
-  pop.replaceChildren(mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' \\u00b7 Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power'),rank);pop.showModal()});
+  const nodes=[mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' \\u00b7 Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power \\u00b7 Rank #'+b.dataset.r)];
+  const f=FASHION[(b.dataset.n||'').toLowerCase()];
+  if(f&&f.image){const w=document.createElement('div');w.className='fit';
+    w.appendChild(mkImg(f.image,b.dataset.n+"'s latest fit"));
+    nodes.push(w,mk('p','fitdate','Fit updated '+f.updated));}
+  pop.replaceChildren(...nodes);pop.showModal()});
 pop.addEventListener('click',e=>{if(e.target===pop)pop.close()});
 </script>"""
 
@@ -275,6 +273,7 @@ for tok, val in {
     "__GUILD__": E_(d["guild"]), "__SERVER__": E_(d["server"].title()), "__COUNT__": str(len(ms)),
     "__UPDATED__": E_(d["updated"]), "__SOURCE__": E_(d["source"]), "__NAVCATS__": nav_cats,
     "__CARDS__": cards, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
-    "__ROLES__": roles, "__CLS__": cls_html, "__CATSECS__": cat_html, "__LOOKUP__": lookup}.items():
+    "__ROLES__": roles, "__CLS__": cls_html, "__CATSECS__": cat_html, "__LOOKUP__": lookup,
+    "__FASHION__": json.dumps(fashion)}.items():
     page = page.replace(tok, val)
 open("docs/index.html", "w", encoding="utf-8").write(page); print("built docs/index.html")

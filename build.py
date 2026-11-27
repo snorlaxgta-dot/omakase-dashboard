@@ -1,12 +1,16 @@
 """data/latest.json (+ older dated snapshots) -> docs/index.html
 
-Optional per-member category scores: add  "scores": {"conquest": 123, "guild-war": 456,
-"boss-battle": 789, "training": 12, "world-boss": 34}  to a member in data/latest.json
-and the matching category pages fill in by themselves.
+Per-member category scores live in data/latest.json as
+  "scores": {"conquest": 123, "guild-war": 456, "boss-battle": 789, "training": 12, "world-boss": 34}
+(scrape.py fills these in when config.json has "score_pages"); the matching pages fill in by themselves.
 """
-import json, glob, html, statistics, collections, math
+import json, glob, html, statistics, collections, math, os
 d = json.load(open("data/latest.json")); ms = d["members"]
-fashion = json.load(open("data/fashion.json")) if glob.glob("data/fashion.json") else {}
+fashion = json.load(open("data/fashion.json")) if os.path.exists("data/fashion.json") else {}
+# only show pictures whose file really exists, and bust the browser cache so new fits show up daily
+fashion = {k: dict(v) for k, v in fashion.items() if os.path.exists("docs/" + v["image"])}
+for v in fashion.values():
+    v["image"] += "?v=" + v["updated"]
 E_ = html.escape
 
 def fmt(t):
@@ -257,13 +261,14 @@ lq.oninput=()=>{const s=lq.value.trim().toLowerCase();document.querySelectorAll(
 
 const pop=document.getElementById('pop');
 const mk=(t,c,x)=>{const e=document.createElement(t);e.className=c;e.textContent=x;return e};
-const mkImg=(s,a)=>{const i=document.createElement('img');i.src=s;i.alt=a||'';i.loading='lazy';return i};
 document.addEventListener('click',e=>{const b=e.target.closest('.nm');if(!b)return;
   const nodes=[mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' \\u00b7 Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power \\u00b7 Rank #'+b.dataset.r)];
   const f=FASHION[(b.dataset.n||'').toLowerCase()];
   if(f&&f.image){const w=document.createElement('div');w.className='fit';
-    w.appendChild(mkImg(f.image,b.dataset.n+"'s latest fit"));
-    nodes.push(w,mk('p','fitdate','Fit updated '+f.updated));}
+    const img=document.createElement('img');img.alt=b.dataset.n+"'s latest fit";img.src=f.image;
+    const dt=mk('p','fitdate','Fit updated '+f.updated);
+    img.onerror=()=>{w.remove();dt.remove()};   // if a picture fails to load, hide it instead of showing a broken icon
+    w.appendChild(img);nodes.push(w,dt);}
   pop.replaceChildren(...nodes);pop.showModal()});
 pop.addEventListener('click',e=>{if(e.target===pop)pop.close()});
 </script>"""

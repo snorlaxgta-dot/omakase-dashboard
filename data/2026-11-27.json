@@ -1,0 +1,279 @@
+{
+ "guild": "Omakase",
+ "server": "bera",
+ "source": "https://mapleidle.gg/guild/bera/Omakase",
+ "updated": "2026-11-27",
+ "members": [
+  {
+   "rank": 1,
+   "name": "Chilaquiles",
+   "class": "Fire/Poison Mage",
+   "role": "",
+   "level": 122,
+   "cp_text": "714AA 470T",
+   "cp": 714470
+  },
+  {
+   "rank": 2,
+   "name": "RockyWolves",
+   "class": "Ice/Lightning Mage",
+   "role": "",
+   "level": 120,
+   "cp_text": "153AA 835T",
+   "cp": 153835
+  },
+  {
+   "rank": 3,
+   "name": "Korpzed",
+   "class": "Shadower",
+   "role": "",
+   "level": 119,
+   "cp_text": "69AA 866T",
+   "cp": 69866
+  },
+  {
+   "rank": 4,
+   "name": "LilSquishy",
+   "class": "Bishop",
+   "role": "",
+   "level": 116,
+   "cp_text": "66AA 948T",
+   "cp": 66948
+  },
+  {
+   "rank": 5,
+   "name": "PsyNyx",
+   "class": "Shadower",
+   "role": "",
+   "level": 117,
+   "cp_text": "64AA 245T",
+   "cp": 64245
+  },
+  {
+   "rank": 6,
+   "name": "XxSinerknGxX",
+   "class": "Shadower",
+   "role": "",
+   "level": 118,
+   "cp_text": "58AA 106T",
+   "cp": 58106
+  },
+  {
+   "rank": 7,
+   "name": "BagDeleter",
+   "class": "Buccaneer",
+   "role": "",
+   "level": 119,
+   "cp_text": "55AA 940T",
+   "cp": 55940
+  },
+  {
+   "rank": 8,
+   "name": "NotRenkki",
+   "class": "Bowmaster",
+   "role": "",
+   "level": 119,
+   "cp_text": "54AA 616T",
+   "cp": 54616
+  },
+  {
+   "rank": 9,
+   "name": "Anytony",
+   "class": "Fire/Poison Mage",
+   "role": "Leader",
+   "level": 119,
+   "cp_text": "41AA 143T",
+   "cp": 41143
+  },
+  {
+   "rank": 10,
+   "name": "Lockon52",
+   "class": "Buccaneer",
+   "role": "",
+   "level": 118,
+   "cp_text": "33AA 948T",
+   "cp": 33948
+  },
+  {
+   "rank": 11,
+   "name": "JayRoller",
+   "class": "Fire/Poison Mage",
+   "role": "",
+   "level": 116,
+   "cp_text": "28AA 230T",
+   "cp": 28230
+  },
+  {
+   "rank": 12,
+   "name": "VoidLord",
+   "class": "Shadower",
+   "role": "",
+   "level": 116,
+   "cp_text": "13AA 795T",
+   "cp": 13795
+  },
+  {
+   "rank": 13,
+   "name": "Churbz",
+   "class": "Night Lord",
+   "role": "",
+   "level": 115,
+   "cp_text": "13AA 276T",
+   "cp": 13276
+  },
+  {
+   "rank": 14,
+   "name": "Cloud1224",
+   "class": "Bishop",
+   "role": "",
+   "level": 114,
+   "cp_text": "13AA 92T",
+   "cp": 13092
+  },
+  {
+   "rank": 15,
+   "name": "Cafeplaza",
+   "class": "Fire/Poison Mage",
+   "role": "",
+   "level": 115,
+   "cp_text": "12AA 118T",
+   "cp": 12118
+  },
+  {
+   "rank": 16,
+   "name": "Lilikoi206",
+   "class": "Marksman",
+   "role": "",
+   "level": 115,
+   "cp_text": "11AA 498T",
+   "cp": 11498
+  },
+  {
+   "rank": 17,
+   "name": "Sere",
+   "class": "Marksman",
+   "role": "",
+   "level": 115,
+   "cp_text": "10AA 855T",
+   "cp": 10855
+  },
+  {
+   "rank": 18,
+   "name": "HealBeach",
+   "class": "Bishop",
+   "role": "",
+   "level": 116,
+   "cp_text": "10AA 716T",
+   "cp": 10716
+  },
+  {
+   "rank": 19,
+   "name": "Harrygor",
+   "class": "Paladin",
+   "role": "",
+   "level": 115,
+   "cp_text": "10AA 437T",
+   "cp": 10437
+  },
+  {
+   "rank": 20,
+   "name": "Blueblade11",
+   "class": "Buccaneer",
+   "role": "",
+   "level": 115,
+   "cp_text": "10AA 53T",
+   "cp": 10053
+  },
+  {
+   "rank": 21,
+   "name": "Soreasy",
+   "class": "Bowmaster",
+   "role": "",
+   "level": 116,
+   "cp_text": "9AA 863T",
+   "cp": 9863
+  },
+  {
+   "rank": 22,
+   "name": "fishyyyy",
+   "class": "Ice/Lightning Mage",
+   "role": "",
+   "level": 115,
+   "cp_text": "9AA 731T",
+   "cp": 9731
+  },
+  {
+   "rank": 23,
+   "name": "jcteee",
+   "class": "Marksman",
+   "role": "",
+   "level": 115,
+   "cp_text": "8AA 395T",
+   "cp": 8395
+  },
+  {
+   "rank": 24,
+   "name": "DeeFameMee",
+   "class": "Paladin",
+   "role": "",
+   "level": 115,
+   "cp_text": "8AA 7T",
+   "cp": 8007
+  },
+  {
+   "rank": 25,
+   "name": "KonoYlwFlash",
+   "class": "Night Lord",
+   "role": "",
+   "level": 113,
+   "cp_text": "6AA 942T",
+   "cp": 6942
+  },
+  {
+   "rank": 26,
+   "name": "Teslar",
+   "class": "Night Lord",
+   "role": "",
+   "level": 115,
+   "cp_text": "6AA 793T",
+   "cp": 6793
+  },
+  {
+   "rank": 27,
+   "name": "Brolyy",
+   "class": "Night Lord",
+   "role": "",
+   "level": 114,
+   "cp_text": "6AA 656T",
+   "cp": 6656
+  },
+  {
+   "rank": 28,
+   "name": "pizookie",
+   "class": "Shadower",
+   "role": "",
+   "level": 115,
+   "cp_text": "6AA 440T",
+   "cp": 6440
+  },
+  {
+   "rank": 29,
+   "name": "patatoe",
+   "class": "Marksman",
+   "role": "",
+   "level": 114,
+   "cp_text": "6AA 218T",
+   "cp": 6218
+  },
+  {
+   "rank": 30,
+   "name": "BurnVictim",
+   "class": "Fire/Poison Mage",
+   "role": "",
+   "level": 114,
+   "cp_text": "3AA 550T",
+   "cp": 3550
+  }
+ ],
+ "page_hash": "a16b6e1df769aa85d0b12d59621912195df08c3c07ca2106980de0e26a1c5c2d"
+}

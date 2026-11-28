@@ -117,6 +117,40 @@ def parse_members(text):
     return members
 
 
+CP_FULL = r"(?:\d+\s*(?:AC|AB|AA|T)\s*)+"
+
+
+def parse_members_loose(text):
+    """Fallback reader for when the page text has its cells on one line or split over many lines.
+    Looks for: rank, then name / role / class, then a level followed by a CP value."""
+    toks = [t.strip() for t in re.split(r"[\t\n\r]", text) if t.strip()]
+    members, i, expected = [], 0, 1
+    while i < len(toks):
+        if toks[i] == str(expected):
+            hit = None
+            for j in range(i + 2, min(i + 9, len(toks))):
+                m = re.fullmatch(r"(\d+)\s+(" + CP_FULL + ")", toks[j])
+                if m:
+                    hit = (j, int(m.group(1)), m.group(2).strip(), j + 1); break
+                if toks[j].isdigit() and j + 1 < len(toks) and re.fullmatch(CP_FULL, toks[j + 1] + " "):
+                    hit = (j, int(toks[j]), toks[j + 1].strip(), j + 2); break
+            if hit:
+                j, level, cp_text, nxt = hit
+                block = toks[i + 1:j]
+                if len(block) >= 2:
+                    members.append({"rank": expected, "name": block[0], "class": block[-1],
+                                    "role": block[1] if len(block) > 2 else "", "level": level,
+                                    "cp_text": cp_text, "cp": cp_to_num(cp_text)})
+                    expected += 1; i = nxt; continue
+        i += 1
+    return members
+
+
+def read_members(text):
+    """Roster from page text: the strict reader first, the tolerant one if that finds nobody."""
+    return parse_members(text) or parse_members_loose(text)
+
+
 def live_fetch():
     """One attempt. No tight retry loop: hammering a 429 window makes it worse."""
     try:
@@ -347,12 +381,12 @@ if __name__ == "__main__":
     import hashlib
     if "--from-file" in sys.argv:
         raw = open(sys.argv[sys.argv.index("--from-file") + 1], encoding="utf-8").read()
-        members = parse_members(to_text(raw))
+        members = read_members(to_text(raw))
         if not members: sys.exit("No members found in that file.")
         save(members, "file"); sys.exit()
-    raw = live_fetch()
+    raw = live_fetch() if cfg.get("live_fetch", True) else None
     if raw:
-        members = parse_members(to_text(raw))
+        members = read_members(to_text(raw))
         if members:
             save(members, "live site"); sys.exit()
         print("Live page had no member list.", file=sys.stderr)
@@ -363,10 +397,17 @@ if __name__ == "__main__":
         h = hashlib.sha256((txt + extra).encode()).hexdigest()
         lp = pathlib.Path("data/latest.json")
         last = json.load(open(lp)).get("page_hash") if lp.exists() else None
-        members = parse_members(to_text(txt))
+        members = read_members(to_text(txt))
+        print(f"page.txt: {len(txt)} characters, {len(members)} members read, "
+              f"{'changed' if h != last else 'same as last run'} (score files included in the check)")
         if members and h != last:
             save(members, "page.txt", {"page_hash": h}); sys.exit()
-        print("page.txt unchanged or unreadable; keeping existing data.")
+        if not members:
+            print("COULD NOT READ MEMBERS from page.txt. First lines of what the script saw:", file=sys.stderr)
+            for ln in [l.strip() for l in to_text(txt).split("\n") if l.strip()][:40]:
+                print("   |", ln[:120], file=sys.stderr)
+        else:
+            print("Nothing changed since the last run; keeping existing data.")
         # still try to fill in any missing pictures even when the member list didn't change
         if members:
             refresh_fashion(members, datetime.date.today().isoformat())

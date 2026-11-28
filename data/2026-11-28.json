@@ -10,8 +10,8 @@
    "class": "Fire/Poison Mage",
    "role": "",
    "level": 122,
-   "cp_text": "731AA 59T",
-   "cp": 731059,
+   "cp_text": "824AA 773T",
+   "cp": 824773,
    "scores": {
     "boss-battle": {
      "score": 1100000000000,
@@ -56,8 +56,8 @@
    "class": "Ice/Lightning Mage",
    "role": "",
    "level": 120,
-   "cp_text": "158AA 99T",
-   "cp": 158099,
+   "cp_text": "160AA 62T",
+   "cp": 160062,
    "scores": {
     "boss-battle": {
      "score": 704000000000,
@@ -102,8 +102,8 @@
    "class": "Bowmaster",
    "role": "",
    "level": 119,
-   "cp_text": "74AA 641T",
-   "cp": 74641,
+   "cp_text": "74AA 955T",
+   "cp": 74955,
    "scores": {
     "boss-battle": {
      "score": 530000000000,
@@ -148,8 +148,8 @@
    "class": "Shadower",
    "role": "",
    "level": 119,
-   "cp_text": "71AA 744T",
-   "cp": 71744,
+   "cp_text": "73AA 145T",
+   "cp": 73145,
    "scores": {
     "boss-battle": {
      "score": 245000000000,
@@ -190,6 +190,52 @@
   },
   {
    "rank": 5,
+   "name": "PsyNyx",
+   "class": "Shadower",
+   "role": "",
+   "level": 117,
+   "cp_text": "69AA 630T",
+   "cp": 69630,
+   "scores": {
+    "boss-battle": {
+     "score": 202000000000,
+     "cp": "64AA",
+     "vs_all": "-34.3%",
+     "vs_class": "-33.1%",
+     "date": "Nov 26, 2026"
+    },
+    "conquest": {
+     "score": 1000000000000,
+     "cp": "57AA",
+     "vs_all": "-4.4%",
+     "vs_class": "-2.0%",
+     "date": "Nov 22, 2026"
+    },
+    "guild-war": {
+     "score": 399000000000,
+     "cp": "58AA",
+     "vs_all": "-22.4%",
+     "vs_class": "-23.2%",
+     "date": "Nov 24, 2026"
+    },
+    "training": {
+     "score": 5400000,
+     "cp": "6.9AA",
+     "vs_all": "-51.8%",
+     "vs_class": "-46.4%",
+     "date": "Sep 24, 2026"
+    },
+    "world-boss": {
+     "score": 229000000000000000,
+     "cp": "60AA",
+     "vs_all": "-49.0%",
+     "vs_class": "-44.3%",
+     "date": "Nov 25, 2026"
+    }
+   }
+  },
+  {
+   "rank": 6,
    "name": "LilSquishy",
    "class": "Bishop",
    "role": "",
@@ -235,59 +281,13 @@
    }
   },
   {
-   "rank": 6,
-   "name": "PsyNyx",
-   "class": "Shadower",
-   "role": "",
-   "level": 117,
-   "cp_text": "67AA 2T",
-   "cp": 67002,
-   "scores": {
-    "boss-battle": {
-     "score": 202000000000,
-     "cp": "64AA",
-     "vs_all": "-34.3%",
-     "vs_class": "-33.1%",
-     "date": "Nov 26, 2026"
-    },
-    "conquest": {
-     "score": 1000000000000,
-     "cp": "57AA",
-     "vs_all": "-4.4%",
-     "vs_class": "-2.0%",
-     "date": "Nov 22, 2026"
-    },
-    "guild-war": {
-     "score": 399000000000,
-     "cp": "58AA",
-     "vs_all": "-22.4%",
-     "vs_class": "-23.2%",
-     "date": "Nov 24, 2026"
-    },
-    "training": {
-     "score": 5400000,
-     "cp": "6.9AA",
-     "vs_all": "-51.8%",
-     "vs_class": "-46.4%",
-     "date": "Sep 24, 2026"
-    },
-    "world-boss": {
-     "score": 229000000000000000,
-     "cp": "60AA",
-     "vs_all": "-49.0%",
-     "vs_class": "-44.3%",
-     "date": "Nov 25, 2026"
-    }
-   }
-  },
-  {
    "rank": 7,
    "name": "XxSinerknGxX",
    "class": "Shadower",
    "role": "",
    "level": 118,
-   "cp_text": "62AA 623T",
-   "cp": 62623,
+   "cp_text": "62AA 941T",
+   "cp": 62941,
    "scores": {
     "boss-battle": {
      "score": 336000000000,
@@ -332,8 +332,8 @@
    "class": "Buccaneer",
    "role": "",
    "level": 119,
-   "cp_text": "56AA 196T",
-   "cp": 56196,
+   "cp_text": "60AA 96T",
+   "cp": 60096,
    "scores": {
     "boss-battle": {
      "score": 384000000000,
@@ -378,8 +378,8 @@
    "class": "Fire/Poison Mage",
    "role": "Leader",
    "level": 119,
-   "cp_text": "41AA 519T",
-   "cp": 41519,
+   "cp_text": "41AA 726T",
+   "cp": 41726,
    "scores": {
     "boss-battle": {
      "score": 357000000000,
@@ -424,8 +424,8 @@
    "class": "Buccaneer",
    "role": "",
    "level": 119,
-   "cp_text": "36AA 672T",
-   "cp": 36672,
+   "cp_text": "37AA 100T",
+   "cp": 37100,
    "scores": {
     "boss-battle": {
      "score": 309000000000,
@@ -470,8 +470,8 @@
    "class": "Fire/Poison Mage",
    "role": "",
    "level": 116,
-   "cp_text": "28AA 902T",
-   "cp": 28902,
+   "cp_text": "30AA 702T",
+   "cp": 30702,
    "scores": {
     "boss-battle": {
      "score": 219000000000,
@@ -516,8 +516,8 @@
    "class": "Shadower",
    "role": "",
    "level": 116,
-   "cp_text": "14AA 578T",
-   "cp": 14578,
+   "cp_text": "14AA 669T",
+   "cp": 14669,
    "scores": {
     "boss-battle": {
      "score": 179000000000,
@@ -558,6 +558,98 @@
   },
   {
    "rank": 13,
+   "name": "Cloud1224",
+   "class": "Bishop",
+   "role": "",
+   "level": 115,
+   "cp_text": "14AA 390T",
+   "cp": 14390,
+   "scores": {
+    "boss-battle": {
+     "score": 128000000000,
+     "cp": "9.1AA",
+     "vs_all": "+13.9%",
+     "vs_class": "+17.3%",
+     "date": "Nov 19, 2026"
+    },
+    "conquest": {
+     "score": 437000000000,
+     "cp": "10AA",
+     "vs_all": "+9.7%",
+     "vs_class": "+8.7%",
+     "date": "Nov 22, 2026"
+    },
+    "guild-war": {
+     "score": 205000000000,
+     "cp": "11AA",
+     "vs_all": "-2.1%",
+     "vs_class": "-2.9%",
+     "date": "Nov 24, 2026"
+    },
+    "training": {
+     "score": 8900000,
+     "cp": "1.4AA",
+     "vs_all": "+16.6%",
+     "vs_class": "+17.1%",
+     "date": "Sep 24, 2026"
+    },
+    "world-boss": {
+     "score": 64000000000000000,
+     "cp": "11AA",
+     "vs_all": "-9.5%",
+     "vs_class": "-8.3%",
+     "date": "Nov 25, 2026"
+    }
+   }
+  },
+  {
+   "rank": 14,
+   "name": "Lilikoi206",
+   "class": "Marksman",
+   "role": "",
+   "level": 115,
+   "cp_text": "13AA 738T",
+   "cp": 13738,
+   "scores": {
+    "boss-battle": {
+     "score": 168000000000,
+     "cp": "11AA",
+     "vs_all": "+32.5%",
+     "vs_class": "+25.9%",
+     "date": "Nov 26, 2026"
+    },
+    "conquest": {
+     "score": 737000000000,
+     "cp": "11AA",
+     "vs_all": "+75.5%",
+     "vs_class": "+66.7%",
+     "date": "Nov 22, 2026"
+    },
+    "guild-war": {
+     "score": 237000000000,
+     "cp": "11AA",
+     "vs_all": "+11.0%",
+     "vs_class": "+6.7%",
+     "date": "Nov 24, 2026"
+    },
+    "training": {
+     "score": 13000000,
+     "cp": "1.3AA",
+     "vs_all": "+77.3%",
+     "vs_class": "+59.8%",
+     "date": "Sep 24, 2026"
+    },
+    "world-boss": {
+     "score": 134000000000000000,
+     "cp": "11AA",
+     "vs_all": "+76.8%",
+     "vs_class": "+60.9%",
+     "date": "Nov 25, 2026"
+    }
+   }
+  },
+  {
+   "rank": 15,
    "name": "Cafeplaza",
    "class": "Fire/Poison Mage",
    "role": "",
@@ -603,13 +695,13 @@
    }
   },
   {
-   "rank": 14,
+   "rank": 16,
    "name": "Churbz",
    "class": "Night Lord",
    "role": "",
    "level": 115,
-   "cp_text": "13AA 366T",
-   "cp": 13366,
+   "cp_text": "13AA 574T",
+   "cp": 13574,
    "scores": {
     "boss-battle": {
      "score": 135000000000,
@@ -649,105 +741,13 @@
    }
   },
   {
-   "rank": 15,
-   "name": "Cloud1224",
-   "class": "Bishop",
-   "role": "",
-   "level": 114,
-   "cp_text": "13AA 153T",
-   "cp": 13153,
-   "scores": {
-    "boss-battle": {
-     "score": 128000000000,
-     "cp": "9.1AA",
-     "vs_all": "+13.9%",
-     "vs_class": "+17.3%",
-     "date": "Nov 19, 2026"
-    },
-    "conquest": {
-     "score": 437000000000,
-     "cp": "10AA",
-     "vs_all": "+9.7%",
-     "vs_class": "+8.7%",
-     "date": "Nov 22, 2026"
-    },
-    "guild-war": {
-     "score": 205000000000,
-     "cp": "11AA",
-     "vs_all": "-2.1%",
-     "vs_class": "-2.9%",
-     "date": "Nov 24, 2026"
-    },
-    "training": {
-     "score": 8900000,
-     "cp": "1.4AA",
-     "vs_all": "+16.6%",
-     "vs_class": "+17.1%",
-     "date": "Sep 24, 2026"
-    },
-    "world-boss": {
-     "score": 64000000000000000,
-     "cp": "11AA",
-     "vs_all": "-9.5%",
-     "vs_class": "-8.3%",
-     "date": "Nov 25, 2026"
-    }
-   }
-  },
-  {
-   "rank": 16,
-   "name": "Lilikoi206",
-   "class": "Marksman",
-   "role": "",
-   "level": 115,
-   "cp_text": "12AA 928T",
-   "cp": 12928,
-   "scores": {
-    "boss-battle": {
-     "score": 168000000000,
-     "cp": "11AA",
-     "vs_all": "+32.5%",
-     "vs_class": "+25.9%",
-     "date": "Nov 26, 2026"
-    },
-    "conquest": {
-     "score": 737000000000,
-     "cp": "11AA",
-     "vs_all": "+75.5%",
-     "vs_class": "+66.7%",
-     "date": "Nov 22, 2026"
-    },
-    "guild-war": {
-     "score": 237000000000,
-     "cp": "11AA",
-     "vs_all": "+11.0%",
-     "vs_class": "+6.7%",
-     "date": "Nov 24, 2026"
-    },
-    "training": {
-     "score": 13000000,
-     "cp": "1.3AA",
-     "vs_all": "+77.3%",
-     "vs_class": "+59.8%",
-     "date": "Sep 24, 2026"
-    },
-    "world-boss": {
-     "score": 134000000000000000,
-     "cp": "11AA",
-     "vs_all": "+76.8%",
-     "vs_class": "+60.9%",
-     "date": "Nov 25, 2026"
-    }
-   }
-  },
-  {
    "rank": 17,
    "name": "Sere",
    "class": "Marksman",
    "role": "",
    "level": 116,
-   "cp_text": "11AA 589T",
-   "cp": 11589,
+   "cp_text": "12AA 471T",
+   "cp": 12471,
    "scores": {
     "boss-battle": {
      "score": 149000000000,
@@ -884,8 +884,8 @@
    "class": "Paladin",
    "role": "",
    "level": 115,
-   "cp_text": "10AA 590T",
-   "cp": 10590,
+   "cp_text": "10AA 640T",
+   "cp": 10640,
    "scores": {
     "boss-battle": {
      "score": 110000000000,
@@ -930,8 +930,8 @@
    "class": "Ice/Lightning Mage",
    "role": "",
    "level": 116,
-   "cp_text": "10AA 285T",
-   "cp": 10285,
+   "cp_text": "10AA 554T",
+   "cp": 10554,
    "scores": {
     "boss-battle": {
      "score": 149000000000,
@@ -976,8 +976,8 @@
    "class": "Buccaneer",
    "role": "",
    "level": 115,
-   "cp_text": "10AA 240T",
-   "cp": 10240,
+   "cp_text": "10AA 362T",
+   "cp": 10362,
    "scores": {
     "boss-battle": {
      "score": 123000000000,
@@ -1068,8 +1068,8 @@
    "class": "Marksman",
    "role": "",
    "level": 115,
-   "cp_text": "8AA 483T",
-   "cp": 8483,
+   "cp_text": "8AA 570T",
+   "cp": 8570,
    "scores": {
     "boss-battle": {
      "score": 119000000000,
@@ -1114,8 +1114,8 @@
    "class": "Night Lord",
    "role": "",
    "level": 114,
-   "cp_text": "7AA 11T",
-   "cp": 7011,
+   "cp_text": "7AA 63T",
+   "cp": 7063,
    "scores": {
     "boss-battle": {
      "score": 133000000000,
@@ -1160,8 +1160,8 @@
    "class": "Night Lord",
    "role": "",
    "level": 115,
-   "cp_text": "6AA 937T",
-   "cp": 6937,
+   "cp_text": "6AA 989T",
+   "cp": 6989,
    "scores": {
     "boss-battle": {
      "score": 115000000000,
@@ -1206,8 +1206,8 @@
    "class": "Night Lord",
    "role": "",
    "level": 114,
-   "cp_text": "6AA 731T",
-   "cp": 6731,
+   "cp_text": "6AA 782T",
+   "cp": 6782,
    "scores": {
     "boss-battle": {
      "score": 126000000000,
@@ -1252,8 +1252,8 @@
    "class": "Shadower",
    "role": "",
    "level": 115,
-   "cp_text": "6AA 483T",
-   "cp": 6483,
+   "cp_text": "6AA 568T",
+   "cp": 6568,
    "scores": {
     "boss-battle": {
      "score": 136000000000,
@@ -1298,8 +1298,8 @@
    "class": "Marksman",
    "role": "",
    "level": 114,
-   "cp_text": "6AA 393T",
-   "cp": 6393,
+   "cp_text": "6AA 423T",
+   "cp": 6423,
    "scores": {
     "boss-battle": {
      "score": 131000000000,
@@ -1344,8 +1344,8 @@
    "class": "Fire/Poison Mage",
    "role": "",
    "level": 114,
-   "cp_text": "3AA 799T",
-   "cp": 3799,
+   "cp_text": "3AA 891T",
+   "cp": 3891,
    "scores": {
     "boss-battle": {
      "score": 96000000000,
@@ -1385,5 +1385,5 @@
    }
   }
  ],
- "page_hash": "b7738c667be087367cf1a7f6deb00b150281b003430f46e70a1f4cf11df996c9"
+ "page_hash": "c24180c7c0b4ce3a788891b3f618d8faf7eb9922111fc12fff1371cf4ec86412"
 }

@@ -9,14 +9,12 @@ Usage:
   python scrape.py --from-file x.txt    parse a page you copy-pasted into a text file
 
 config.json can optionally contain:
-  "score_pages": {
-      "conquest":    "https://mapleidle.gg/....",
-      "guild-war":   "https://mapleidle.gg/....",
-      "boss-battle": "https://mapleidle.gg/....",
-      "training":    "https://mapleidle.gg/....",
-      "world-boss":  "https://mapleidle.gg/...."
-  }
-Any category left out is simply skipped, and its page stays on the "not collected yet" message.
+  "score_pages": {"conquest": "https://mapleidle.gg/tools/score-analysis?kind=guild&region=bera&name=Omakase&mode=conquest", ...}
+  mode= is one of: conquest, world_boss, guild_war, guild_boss_battle, training_ground
+Categories: conquest, guild-war, boss-battle, training, world-boss.
+Fallback if the live page can't be read: paste the page text into scores/<category>.txt
+(e.g. scores/conquest.txt) and it is parsed the same way.
+Any category with neither stays on the "not collected yet" message.
 """
 import json, re, sys, time, datetime, pathlib, urllib.request, urllib.error
 from html.parser import HTMLParser
@@ -132,10 +130,21 @@ def live_fetch():
 
 
 # ---------------------------------------------------------------- category scores
+SCORE_UNITS = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12, "AA": 1e15, "AB": 1e18, "AC": 1e21}
+SCORE_RE = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(K|M|B|T|AA|AB|AC)?")
+
+
+def score_value(line):
+    """'828B' -> 828000000000, '1.7T' -> 1700000000000, '5T' -> 5000000000000. None if not a score."""
+    m = SCORE_RE.fullmatch(line.strip())
+    if not m:
+        return None
+    return int(round(float(m.group(1).replace(",", "")) * SCORE_UNITS.get(m.group(2), 1)))
+
+
 def parse_scores(text, names):
-    """Generic parser: for every guild member name found in the page text, take the first
-    number on the same line, or failing that on one of the next 3 lines.
-    Works for simple ranking lists; if a page is laid out differently, send me its text."""
+    """MapleIdle 'Score Analysis' layout. For each member: name line, 'Lv. 116 - Class' line, then the
+    cells Best Score, CP at Score, vs all, vs class, Date. Returns {name: {score, cp, vs_all, vs_class, date}}."""
     lines = [l.strip() for l in text.replace("\r", "").replace("\t", " \n").split("\n")]
     lines = [l for l in lines if l]
     lookup = {n.lower(): n for n in names}
@@ -144,29 +153,45 @@ def parse_scores(text, names):
         key = line.lower()
         if key not in lookup or lookup[key] in found:
             continue
-        for look in lines[i + 1:i + 4]:
-            m = re.fullmatch(r"[\d,]+(?:\.\d+)?", look.replace(" ", ""))
-            if m:
-                num = float(m.group(0).replace(",", ""))
-                found[lookup[key]] = int(num) if num.is_integer() else num
-                break
+        j = i + 1
+        if j < len(lines) and lines[j].lower().startswith("lv"):
+            j += 1
+        cells = lines[j:j + 5]
+        v = score_value(cells[0]) if cells else None
+        if v is None:
+            continue
+        entry = {"score": v}
+        for k, c in zip(("cp", "vs_all", "vs_class", "date"), cells[1:]):
+            entry[k] = c
+        found[lookup[key]] = entry
     return found
 
 
 def collect_scores(members):
-    """Returns {category: {member name: score}} for every page listed in config score_pages."""
+    """{category: {member name: score}}. For each category in config "score_pages" we try the live
+    page first; if that fails or finds nobody, we fall back to a pasted copy in scores/<category>.txt."""
     pages = cfg.get("score_pages") or {}
+    cats = set(pages) | {p.stem for p in pathlib.Path("scores").glob("*.txt")}
     names = [m["name"] for m in members]
     out = {}
-    for cat, url in pages.items():
-        try:
-            time.sleep(FASHION_DELAY)
-            got = parse_scores(to_text(fetch(url)), names)
-        except RateLimited as e:
-            print(f"scores: rate limited, stopping: {e}", file=sys.stderr); break
-        except Exception as e:
-            print(f"scores: {cat} failed: {e}", file=sys.stderr); continue
-        print(f"scores: {cat}: found {len(got)} of {len(names)} members")
+    for cat in sorted(cats):
+        got = {}
+        url = pages.get(cat)
+        if url:
+            try:
+                time.sleep(FASHION_DELAY)
+                got = parse_scores(to_text(fetch(url)), names)
+                print(f"scores: {cat}: live page gave {len(got)} of {len(names)} members")
+            except RateLimited as e:
+                print(f"scores: rate limited, stopping live fetches: {e}", file=sys.stderr)
+                pages = {}
+            except Exception as e:
+                print(f"scores: {cat} live fetch failed: {e}", file=sys.stderr)
+        if not got:
+            f = pathlib.Path("scores") / f"{cat}.txt"
+            if f.exists():
+                got = parse_scores(to_text(f.read_text(encoding="utf-8")), names)
+                print(f"scores: {cat}: pasted file gave {len(got)} of {len(names)} members")
         if got:
             out[cat] = got
     return out

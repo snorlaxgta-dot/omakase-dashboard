@@ -90,29 +90,50 @@ for m in ms:
 CATS = [("conquest", "Guild Conquest"), ("guild-war", "Guild War"), ("boss-battle", "Guild Boss Battle"),
         ("training", "Training Ground"), ("world-boss", "World Boss")]
 def score_text(v):
-    return f"{v:,}" if isinstance(v, (int, float)) else E_(str(v))
-cat_html = ""
+    if not isinstance(v, (int, float)):
+        return E_(str(v))
+    for u, n in (("AB", 1e18), ("AA", 1e15), ("T", 1e12), ("B", 1e9), ("M", 1e6)):
+        if v >= n:
+            return (f"{v/n:.2f}".rstrip("0").rstrip(".")) + u
+    return f"{v:,.0f}"
+
+def entry(v):
+    return v if isinstance(v, dict) else {"score": v}
+
+def pct(v):
+    if not v: return "<td>-</td>"
+    return f"<td class='mono {'neg' if str(v).startswith('-') else 'pos'}'>{E_(str(v))}</td>"
+
+def plain(v):
+    return f"<td>{E_(str(v))}</td>" if v else "<td>-</td>"
+
+tab_links, panels = "", ""
 for key, label in CATS:
-    items = [(m, (m.get("scores") or {}).get(key)) for m in ms]
-    items = [(m, v) for m, v in items if v is not None]
+    items = [(m, entry(m["scores"][key])) for m in ms if (m.get("scores") or {}).get(key) is not None]
+    items.sort(key=lambda x: -x[1]["score"] if isinstance(x[1].get("score"), (int, float)) else 0)
     if items:
-        items.sort(key=lambda x: -x[1] if isinstance(x[1], (int, float)) else 0)
-        body = "".join(f"<tr class='{'top'+str(i+1) if i < 3 else ''}'><td>{i+1}</td><td>{btn(m)}{role_tag(m)}</td>"
-                       f"<td>{E_(m['class'])}</td><td>{m['level']}</td><td class=mono>{score_text(v)}</td></tr>"
-                       for i, (m, v) in enumerate(items))
+        body = "".join(
+            f"<tr class='{'top'+str(i+1) if i < 3 else ''}'><td>{i+1}</td><td>{btn(m)}{role_tag(m)}</td>"
+            f"<td>{E_(m['class'])}</td><td>{m['level']}</td><td class=mono>{score_text(e.get('score'))}</td>"
+            f"{plain(e.get('cp'))}{pct(e.get('vs_all'))}{pct(e.get('vs_class'))}{plain(e.get('date'))}</tr>"
+            for i, (m, e) in enumerate(items))
         table = (f"<div class=tw><table><thead><tr><th>#</th><th>Character</th><th>Class</th><th>Level</th>"
-                 f"<th>Score</th></tr></thead><tbody>{body}</tbody></table></div>")
+                 f"<th>Best Score</th><th>CP at Score</th><th>vs All</th><th>vs Class</th><th>Date</th></tr></thead>"
+                 f"<tbody>{body}</tbody></table></div>")
     else:
         table = (f"<p class=note>No {label} scores have been collected for this guild yet. "
-                 f"This page fills in automatically once the daily update includes them.</p>")
-    cat_html += (f"<section class=sec id={key}><h2 class=title>{label}</h2>"
-                 f"<p class=sub>Member ranking within the guild</p>{table}</section>")
+                 f"This tab fills in automatically once the daily update includes them.</p>")
+    tab_links += f"<a href='#{key}' data-t={key}>{label}</a>"
+    panels += f"<div class=panel data-t={key}>{table}</div>"
+cat_html = (f"<section class=sec id=scores><h2 class=title>Score Analysis</h2>"
+            f"<p class=sub>Each member's best score in every guild content. Pick a tab.</p>"
+            f"<div class=tabs>{tab_links}</div>{panels}</section>")
 
 # ---- player lookup (guild members)
 lookup = "".join(f"<div class=lr data-name='{E_(m['name'].lower())}'>{btn(m)}"
                  f"<span>{E_(m['class'])} · Lv {m['level']} · {E_(m['cp_text'])}</span></div>" for m in ms)
 
-nav_cats = "".join(f"<a href='#{k}' data-s={k}>{l}</a>" for k, l in CATS)
+nav_cats = "<a href='#scores' data-s=scores>Score Analysis</a>"
 
 TEMPLATE = """<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#1a1226">
 <title>__GUILD__ - Guild Dashboard</title>
@@ -173,6 +194,12 @@ td:nth-child(5){white-space:nowrap}
 .lr{background:linear-gradient(var(--wood),var(--wood2));border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;min-width:0}
 .lr span{color:var(--muted);font-size:13px}
 .about p{max-width:680px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 16px}
+.tabs a{padding:7px 14px;border:1px solid var(--line);border-radius:999px;color:var(--ink);background:var(--wood2);white-space:nowrap}
+.tabs a:hover{background:#33221a;text-decoration:none}
+.tabs a.on{border-color:var(--gold);color:var(--gold);background:#3a2616;font-weight:700}
+.panel{display:none} .panel.on{display:block}
+.pos{color:#7fd99a} .neg{color:#ff8a7a}
 footer{max-width:1020px;margin:0 auto;padding:6px 28px 40px;color:#8f7d68;font-size:13px}
 dialog{background:linear-gradient(var(--wood),var(--wood2));color:var(--ink);border:2px solid var(--gold2);border-radius:16px;padding:26px 36px;min-width:260px;text-align:center;box-shadow:0 20px 60px #000a}
 dialog::backdrop{background:#0d0810cc}
@@ -239,8 +266,14 @@ __CATSECS__
 <script>
 const FASHION = __FASHION__;
 const secs=[...document.querySelectorAll('.sec')],links=[...document.querySelectorAll('nav a[data-s]')];
-function route(){const h=(location.hash||'#home').slice(1),id=secs.some(s=>s.id===h)?h:'home';
-  secs.forEach(s=>s.classList.toggle('on',s.id===id));links.forEach(a=>a.classList.toggle('on',a.dataset.s===id));window.scrollTo(0,0)}
+const TABS=[...document.querySelectorAll('.tabs a')],PANELS=[...document.querySelectorAll('.panel')],KEYS=TABS.map(a=>a.dataset.t);
+let lastTab=KEYS[0],cur=null;
+function route(){let h=(location.hash||'#home').slice(1);
+  if(KEYS.includes(h)){lastTab=h;h='scores'}
+  const id=secs.some(s=>s.id===h)?h:'home';
+  secs.forEach(s=>s.classList.toggle('on',s.id===id));links.forEach(a=>a.classList.toggle('on',a.dataset.s===id));
+  TABS.forEach(a=>a.classList.toggle('on',a.dataset.t===lastTab));PANELS.forEach(p=>p.classList.toggle('on',p.dataset.t===lastTab));
+  if(id!==cur){window.scrollTo(0,0);cur=id}}
 addEventListener('hashchange',route);route();
 
 document.querySelectorAll('table.sortable').forEach(t=>{const ths=[...t.querySelectorAll('th')];

@@ -3,6 +3,7 @@
  "server": "bera",
  "base": "https://mapleidle.gg",
  "fetch_fashion": false,
+ "live_fetch": false,
  "delay_seconds": 3,
  "user_agent": "OmakaseGuildDashboard/1.0 (+https://snorlaxgta-dot.github.io/omakase-dashboard/)"
 }

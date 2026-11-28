@@ -1,37 +1,49 @@
-"""Fetch the guild page once, parse members, save data/latest.json + dated snapshot.
-Then, every run:
-  * refreshes EVERY member's fashion sprite into docs/fashion/ (so pictures stay current)
-  * optionally collects category scores (Guild Conquest, Guild War, ...) if you list their
-    MapleIdle pages under "score_pages" in config.json (see bottom of this file's notes)
+"""Reads the data the browser helper saved to the repo and turns it into data/*.json for every guild in config.json.
+
+For each guild:
+  <page.txt>            the guild roster page (saved by the browser helper, or pasted by hand)
+  <scores_dir>/*.txt    one file per score tab: conquest, world-boss, guild-war, boss-battle, training
+  <fdir>/<name>.png     each member's current fit picture
+and it writes <data>/latest.json, a dated snapshot and <fjson> (the list of fits).
+
+The first guild in config.json keeps the original locations (data/, page.txt, scores/, docs/fashion/);
+every other guild uses its own folders (data/<key>/, <key>/page.txt, <key>/scores/, docs/fashion/<key>/).
 
 Usage:
-  python scrape.py                      fetch from mapleidle.gg
-  python scrape.py --from-file x.txt    parse a page you copy-pasted into a text file
-
-config.json can optionally contain:
-  "score_pages": {"conquest": "https://mapleidle.gg/tools/score-analysis?kind=guild&region=bera&name=Omakase&mode=conquest", ...}
-  mode= is one of: conquest, world_boss, guild_war, guild_boss_battle, training_ground
-Categories: conquest, guild-war, boss-battle, training, world-boss.
-Fallback if the live page can't be read: paste the page text into scores/<category>.txt
-(e.g. scores/conquest.txt) and it is parsed the same way.
-Any category with neither stays on the "not collected yet" message.
+  python scrape.py                           all guilds
+  python scrape.py --guild purify            one guild
+  python scrape.py --from-file x.txt         parse a copy-pasted roster page (first guild, or --guild)
 """
-import json, re, sys, time, datetime, pathlib, urllib.request, urllib.error
+import json, re, sys, time, datetime, pathlib, hashlib, traceback, urllib.request, urllib.error
 from html.parser import HTMLParser
 
 cfg = json.load(open("config.json"))
 # tolerate a base url that got pasted as a markdown link: "[x](https://x)"
 _m = re.search(r"\((https?://[^)]+)\)", cfg["base"])
 cfg["base"] = (_m.group(1) if _m else cfg["base"]).strip().rstrip("/")
-URL = f"{cfg['base']}/guild/{cfg['server']}/{cfg['guild']}"
-UNITS = {"T": 1, "AA": 1000, "AB": 10**6, "AC": 10**9}   # in trillions
 
-FASHION_DIR = pathlib.Path("docs/fashion")
-FASHION_JSON = pathlib.Path("data/fashion.json")
+
+def load_guilds(cfg):
+    gl = cfg.get("guilds") or [{"key": "omakase", "name": cfg.get("guild", "Omakase"), "server": cfg.get("server", "bera")}]
+    out = []
+    for i, g in enumerate(gl):
+        g = dict(g); k = g["key"]
+        g["primary"] = (i == 0)
+        g.setdefault("server", cfg.get("server", "bera"))
+        if i == 0:
+            g.update(data="data", page="page.txt", scores_dir="scores", fdir="docs/fashion", fjson="data/fashion.json", fweb="fashion")
+        else:
+            g.update(data=f"data/{k}", page=f"{k}/page.txt", scores_dir=f"{k}/scores", fdir=f"docs/fashion/{k}",
+                     fjson=f"data/{k}/fashion.json", fweb=f"fashion/{k}")
+        g["url"] = f"{cfg['base']}/guild/{g['server']}/{g['name']}"
+        out.append(g)
+    return out
+
+
+UNITS = {"T": 1, "AA": 1000, "AB": 10**6, "AC": 10**9}   # in trillions
 SPRITE_RE = re.compile(r"https://cdn\.mapleidle\.gg/sprites/[0-9a-f]+\.png")
 FASHION_DELAY = float(cfg.get("delay_seconds", 3))
-FASHION_PER_RUN = 30       # refresh everyone every night (30 members x ~2 requests x 3s = ~3 min)
-ROTATION_FILE = pathlib.Path("data/fashion_rotation.txt")
+FASHION_PER_RUN = 30
 
 
 def cp_to_num(s):
@@ -42,17 +54,13 @@ class RateLimited(Exception):
     """mapleidle said 429 - stop knocking and try again next run."""
 
 
-def is_rate_limit(e):
-    return getattr(e, "code", None) == 429 or "429" in str(e)
-
-
 def _open(url):
     req = urllib.request.Request(url, headers={"User-Agent": cfg["user_agent"]})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return r.read()
     except urllib.error.HTTPError as e:
-        if is_rate_limit(e):
+        if getattr(e, "code", None) == 429:
             raise RateLimited(f"{e} for {url}") from None
         raise
 
@@ -93,6 +101,7 @@ def to_text(raw):
     return html_to_text(raw) if "<html" in raw[:2000].lower() or "<div" in raw[:5000] else raw
 
 
+# ---------------------------------------------------------------- roster
 def parse_members(text):
     lines = [l.strip() for l in text.replace("\r", "").split("\n")]
     lines = [l for l in lines if l]
@@ -151,32 +160,28 @@ def read_members(text):
     return parse_members(text) or parse_members_loose(text)
 
 
-def live_fetch():
-    """One attempt. No tight retry loop: hammering a 429 window makes it worse."""
+def live_fetch(g):
     try:
-        return fetch(URL)
+        return fetch(g["url"])
     except RateLimited as e:
-        print(f"Rate limited (429): {e}", file=sys.stderr)
-        return None
+        print(f"[{g['key']}] rate limited (429): {e}", file=sys.stderr)
     except Exception as e:
-        print(f"Live fetch failed: {e}", file=sys.stderr)
-        return None
+        print(f"[{g['key']}] live fetch failed: {e}", file=sys.stderr)
+    return None
 
 
 # ---------------------------------------------------------------- category scores
 SCORE_UNITS = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12, "AA": 1e15, "AB": 1e18, "AC": 1e21}
 SCORE_RE = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(K|M|B|T|AA|AB|AC)?")
+CP_RE = re.compile(r"\d[\d,]*(?:\.\d+)?\s*(?:AC|AB|AA|T)")
 
 
 def score_value(line):
-    """'828B' -> 828000000000, '1.7T' -> 1700000000000, '5T' -> 5000000000000. None if not a score."""
+    """'828B' -> 828000000000, '1.7T' -> 1700000000000. None if the line is not a score."""
     m = SCORE_RE.fullmatch(line.strip())
     if not m:
         return None
     return int(round(float(m.group(1).replace(",", "")) * SCORE_UNITS.get(m.group(2), 1)))
-
-
-CP_RE = re.compile(r"\d[\d,]*(?:\.\d+)?\s*(?:AC|AB|AA|T)")
 
 
 def parse_scores(text, names):
@@ -202,46 +207,28 @@ def parse_scores(text, names):
     return found
 
 
-def collect_scores(members):
-    """{category: {member name: score}}. For each category in config "score_pages" we try the live
-    page first; if that fails or finds nobody, we fall back to a pasted copy in scores/<category>.txt."""
-    pages = cfg.get("score_pages") or {}
-    cats = set(pages) | {p.stem for p in pathlib.Path("scores").glob("*.txt")}
+def collect_scores(g, members):
+    """{category: {member name: score}} read from <scores_dir>/<category>.txt."""
     names = [m["name"] for m in members]
     out = {}
-    for cat in sorted(cats):
-        got = {}
-        url = pages.get(cat)
-        if url:
-            try:
-                time.sleep(FASHION_DELAY)
-                got = parse_scores(to_text(fetch(url)), names)
-                print(f"scores: {cat}: live page gave {len(got)} of {len(names)} members")
-            except RateLimited as e:
-                print(f"scores: rate limited, stopping live fetches: {e}", file=sys.stderr)
-                pages = {}
-            except Exception as e:
-                print(f"scores: {cat} live fetch failed: {e}", file=sys.stderr)
-        if not got:
-            f = pathlib.Path("scores") / f"{cat}.txt"
-            if f.exists():
-                got = parse_scores(to_text(f.read_text(encoding="utf-8")), names)
-                print(f"scores: {cat}: pasted file gave {len(got)} of {len(names)} members")
+    for f in sorted(pathlib.Path(g["scores_dir"]).glob("*.txt")):
+        got = parse_scores(to_text(f.read_text(encoding="utf-8")), names)
+        print(f"[{g['key']}] scores: {f.stem}: {len(got)} of {len(names)} members")
         if got:
-            out[cat] = got
+            out[f.stem] = got
     return out
 
 
-def attach_scores(members):
-    """Put scores on each member. Keeps yesterday's scores for anything we couldn't fetch today."""
+def attach_scores(g, members):
+    """Put scores on each member. Keeps yesterday's scores for anything missing today."""
     old = {}
-    lp = pathlib.Path("data/latest.json")
+    lp = pathlib.Path(g["data"]) / "latest.json"
     if lp.exists():
         try:
             old = {m["name"]: m.get("scores", {}) for m in json.load(open(lp))["members"]}
         except Exception:
             pass
-    fresh = collect_scores(members)
+    fresh = collect_scores(g, members)
     for m in members:
         sc = dict(old.get(m["name"], {}))
         for cat, vals in fresh.items():
@@ -251,16 +238,11 @@ def attach_scores(members):
             m["scores"] = sc
 
 
-# ---------------------------------------------------------------- fashion sprites
-def fashion_page_url(name):
-    return f"{cfg['base']}/characters/{cfg['server']}/{name}/fashion"
-
-
-def fashion_for(name):
-    """Scrape one member's fashion page. Returns the sprite URL or None.
-    Regexes the RAW html: the sprite lives in a src="..." attribute that ToText drops."""
+# ---------------------------------------------------------------- fashion
+def fashion_for(g, name):
+    """Scrape one member's fashion page (only used when fetch_fashion is on). Returns the sprite URL or None."""
     try:
-        raw = fetch(fashion_page_url(name))
+        raw = fetch(f"{cfg['base']}/characters/{g['server']}/{name}/fashion")
     except RateLimited:
         raise
     except Exception as e:
@@ -273,144 +255,112 @@ def fashion_for(name):
     return None
 
 
-def read_rotation():
-    if ROTATION_FILE.exists():
-        try:
-            return int(ROTATION_FILE.read_text().strip() or 0)
-        except ValueError:
-            return 0
-    return 0
-
-
-def write_rotation(n):
-    ROTATION_FILE.parent.mkdir(parents=True, exist_ok=True)
-    ROTATION_FILE.write_text(str(n))
-
-
-def next_batch(members, count):
-    if not members:
-        return []
-    count = min(count, len(members))
-    start = read_rotation() % len(members)
-    idx = [(start + i) % len(members) for i in range(count)]
-    write_rotation((start + count) % len(members))
-    return [members[i] for i in idx]
-
-
-def refresh_fashion(members, today):
-    """Download each member's current fit into docs/fashion/ and write data/fashion.json.
-    fashion.json only ever lists images that really exist on disk."""
-    FASHION_DIR.mkdir(parents=True, exist_ok=True)
-    FASHION_JSON.parent.mkdir(parents=True, exist_ok=True)
-
+def refresh_fashion(g, members, today):
+    """Keep <fjson> in step with the pictures that really exist on disk (the browser helper uploads them)."""
+    fdir, fjson = pathlib.Path(g["fdir"]), pathlib.Path(g["fjson"])
+    fdir.mkdir(parents=True, exist_ok=True)
+    fjson.parent.mkdir(parents=True, exist_ok=True)
     try:
-        old = json.load(open(FASHION_JSON)) if FASHION_JSON.exists() else {}
+        old = json.load(open(fjson)) if fjson.exists() else {}
     except Exception:
         old = {}
-    # drop entries whose image file is missing (this is what caused the broken pictures)
-    out = {k: v for k, v in old.items() if (FASHION_DIR / f"{k}.png").exists()}
-    for m in members:   # pictures uploaded by the browser helper count even if the list missed them
+    out = {k: v for k, v in old.items() if (fdir / f"{k}.png").exists()}
+    for m in members:   # pictures uploaded by the helper count even if the list missed them
         sl = m["name"].lower()
-        if sl not in out and (FASHION_DIR / f"{sl}.png").exists():
-            out[sl] = {"name": m["name"], "image": f"fashion/{sl}.png", "updated": today}
+        if sl not in out and (fdir / f"{sl}.png").exists():
+            out[sl] = {"name": m["name"], "image": f"{g['fweb']}/{sl}.png", "updated": today}
     if not cfg.get("fetch_fashion", True):
-        json.dump(out, open(FASHION_JSON, "w"), indent=1)
-        print(f"fashion: downloading is off in config.json; {len(out)} pictures listed")
+        json.dump(out, open(fjson, "w"), indent=1)
+        print(f"[{g['key']}] fashion: downloading is off in config.json; {len(out)} pictures listed")
         return
+
     saved = failed = 0
-
-    # members with no picture yet go first, then the rest
-    missing = [m for m in members if not (FASHION_DIR / f"{m['name'].lower()}.png").exists()]
-    rest = [m for m in next_batch(members, FASHION_PER_RUN) if m not in missing]
-    batch = (missing + rest)[:FASHION_PER_RUN]
-    print(f"fashion: refreshing {len(batch)} of {len(members)} members this run "
-          f"({len(missing)} had no picture yet)")
-
-    for i, m in enumerate(batch, 1):
-        name = m["name"]
-        slug = name.lower()
-        print(f"[{i}/{len(batch)}] fashion: {name}")
+    batch = [m for m in members if not (fdir / f"{m['name'].lower()}.png").exists()] + \
+            [m for m in members if (fdir / f"{m['name'].lower()}.png").exists()]
+    for i, m in enumerate(batch[:FASHION_PER_RUN], 1):
+        name, slug = m["name"], m["name"].lower()
+        print(f"[{g['key']}] [{i}/{len(batch)}] fashion: {name}")
         try:
-            url = fashion_for(name)
-        except RateLimited as e:
-            print(f"  rate limited - stopping fashion refresh: {e}", file=sys.stderr)
-            break
-        if not url:
-            failed += 1
-            time.sleep(FASHION_DELAY); continue
-
-        dest = FASHION_DIR / f"{slug}.png"
-        try:
+            url = fashion_for(g, name)
+            if not url:
+                failed += 1; time.sleep(FASHION_DELAY); continue
             blob = fetch_bytes(url)
         except RateLimited as e:
-            print(f"  rate limited - stopping fashion refresh: {e}", file=sys.stderr)
-            break
+            print(f"  rate limited - stopping fashion refresh: {e}", file=sys.stderr); break
         except Exception as e:
             print(f"  sprite download failed for {name}: {e}", file=sys.stderr)
-            failed += 1
-            time.sleep(FASHION_DELAY); continue
-
+            failed += 1; time.sleep(FASHION_DELAY); continue
+        dest = fdir / f"{slug}.png"
         if not dest.exists() or dest.read_bytes() != blob:
             dest.write_bytes(blob); saved += 1
-            out[slug] = {"name": name, "image": f"fashion/{slug}.png", "updated": today}
-            print(f"  saved {name} ({len(blob)} bytes)")
+            out[slug] = {"name": name, "image": f"{g['fweb']}/{slug}.png", "updated": today}
         else:
-            # same picture as before: keep its original "updated" date
-            out.setdefault(slug, {"name": name, "image": f"fashion/{slug}.png", "updated": today})
-            print(f"  unchanged {name}")
+            out.setdefault(slug, {"name": name, "image": f"{g['fweb']}/{slug}.png", "updated": today})
         time.sleep(FASHION_DELAY)
+    json.dump(out, open(fjson, "w"), indent=1)
+    print(f"[{g['key']}] fashion: {saved} new/changed, {failed} failed; {len(out)} pictures listed")
 
-    json.dump(out, open(FASHION_JSON, "w"), indent=1)
-    print(f"fashion: {saved} new/changed, {failed} failed; {len(out)} pictures listed in data/fashion.json")
 
-
-# ---------------------------------------------------------------- save
-def save(members, note, extra=None):
-    attach_scores(members)
-    out = {"guild": cfg["guild"], "server": cfg["server"], "source": URL,
+# ---------------------------------------------------------------- save + per-guild run
+def save(g, members, note, extra=None):
+    attach_scores(g, members)
+    out = {"guild": g["name"], "server": g["server"], "source": g["url"],
            "updated": datetime.date.today().isoformat(), "members": members}
     out.update(extra or {})
-    pathlib.Path("data").mkdir(exist_ok=True)
-    json.dump(out, open("data/latest.json", "w"), indent=1)
-    json.dump(out, open(f"data/{out['updated']}.json", "w"), indent=1)
-    print(f"{len(members)} members saved ({note})")
-    refresh_fashion(members, out["updated"])
+    d = pathlib.Path(g["data"]); d.mkdir(parents=True, exist_ok=True)
+    json.dump(out, open(d / "latest.json", "w"), indent=1)
+    json.dump(out, open(d / f"{out['updated']}.json", "w"), indent=1)
+    print(f"[{g['key']}] {len(members)} members saved ({note})")
+    refresh_fashion(g, members, out["updated"])
 
 
-if __name__ == "__main__":
-    import hashlib
-    if "--from-file" in sys.argv:
-        raw = open(sys.argv[sys.argv.index("--from-file") + 1], encoding="utf-8").read()
-        members = read_members(to_text(raw))
-        if not members: sys.exit("No members found in that file.")
-        save(members, "file"); sys.exit()
-    raw = live_fetch() if cfg.get("live_fetch", True) else None
+def run_guild(g, from_file=None):
+    key = g["key"]
+    if from_file:
+        members = read_members(to_text(open(from_file, encoding="utf-8").read()))
+        if not members:
+            print(f"[{key}] no members found in that file."); return
+        save(g, members, "file"); return
+
+    raw = live_fetch(g) if cfg.get("live_fetch", True) else None
     if raw:
         members = read_members(to_text(raw))
         if members:
-            save(members, "live site"); sys.exit()
-        print("Live page had no member list.", file=sys.stderr)
-    p = pathlib.Path("page.txt")
-    if p.exists() and p.read_text(encoding="utf-8").strip():
-        txt = p.read_text(encoding="utf-8")
-        extra = "".join(f.read_text(encoding="utf-8") for f in sorted(pathlib.Path("scores").glob("*.txt")))
-        h = hashlib.sha256((txt + extra).encode()).hexdigest()
-        lp = pathlib.Path("data/latest.json")
-        last = json.load(open(lp)).get("page_hash") if lp.exists() else None
-        members = read_members(to_text(txt))
-        print(f"page.txt: {len(txt)} characters, {len(members)} members read, "
-              f"{'changed' if h != last else 'same as last run'} (score files included in the check)")
-        if members and h != last:
-            save(members, "page.txt", {"page_hash": h}); sys.exit()
-        if not members:
-            print("COULD NOT READ MEMBERS from page.txt. First lines of what the script saw:", file=sys.stderr)
-            for ln in [l.strip() for l in to_text(txt).split("\n") if l.strip()][:40]:
-                print("   |", ln[:120], file=sys.stderr)
-        else:
-            print("Nothing changed since the last run; keeping existing data.")
-        # still try to fill in any missing pictures even when the member list didn't change
-        if members:
-            refresh_fashion(members, datetime.date.today().isoformat())
+            save(g, members, "live site"); return
+        print(f"[{key}] live page had no member list.", file=sys.stderr)
+
+    p = pathlib.Path(g["page"])
+    if not (p.exists() and p.read_text(encoding="utf-8").strip()):
+        print(f"[{key}] no {g['page']} yet: nothing to build for this guild (run the browser refresh once).")
+        return
+    txt = p.read_text(encoding="utf-8")
+    extra = "".join(f.read_text(encoding="utf-8") for f in sorted(pathlib.Path(g["scores_dir"]).glob("*.txt")))
+    h = hashlib.sha256((txt + extra).encode()).hexdigest()
+    lp = pathlib.Path(g["data"]) / "latest.json"
+    last = json.load(open(lp)).get("page_hash") if lp.exists() else None
+    members = read_members(to_text(txt))
+    print(f"[{key}] {g['page']}: {len(txt)} characters, {len(members)} members read, "
+          f"{'changed' if h != last else 'same as last run'} (score files included in the check)")
+    if members and h != last:
+        save(g, members, g["page"], {"page_hash": h}); return
+    if not members:
+        print(f"[{key}] COULD NOT READ MEMBERS. First lines of what the script saw:", file=sys.stderr)
+        for ln in [l.strip() for l in to_text(txt).split("\n") if l.strip()][:40]:
+            print("   |", ln[:120], file=sys.stderr)
     else:
-        print("No new data; keeping existing data.")
+        print(f"[{key}] nothing changed since the last run; keeping existing data.")
+        refresh_fashion(g, members, datetime.date.today().isoformat())
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    only = args[args.index("--guild") + 1] if "--guild" in args else None
+    ff = args[args.index("--from-file") + 1] if "--from-file" in args else None
+    for g in load_guilds(cfg):
+        if only and g["key"] != only:
+            continue
+        try:
+            run_guild(g, ff)
+        except Exception:
+            print(f"[{g['key']}] FAILED:", file=sys.stderr); traceback.print_exc()
     sys.exit(0)

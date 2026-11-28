@@ -1,9 +1,11 @@
 {
- "guild": "Omakase",
- "server": "bera",
  "base": "https://mapleidle.gg",
  "fetch_fashion": false,
  "live_fetch": false,
  "delay_seconds": 3,
- "user_agent": "OmakaseGuildDashboard/1.0 (+https://snorlaxgta-dot.github.io/omakase-dashboard/)"
+ "user_agent": "OmakaseGuildDashboard/1.0 (+https://snorlaxgta-dot.github.io/omakase-dashboard/)",
+ "guilds": [
+  {"key": "omakase", "name": "Omakase", "server": "bera"},
+  {"key": "purify", "name": "Purify", "server": "bera"}
+ ]
 }

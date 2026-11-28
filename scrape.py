@@ -142,9 +142,13 @@ def score_value(line):
     return int(round(float(m.group(1).replace(",", "")) * SCORE_UNITS.get(m.group(2), 1)))
 
 
+CP_RE = re.compile(r"\d[\d,]*(?:\.\d+)?\s*(?:AC|AB|AA|T)")
+
+
 def parse_scores(text, names):
-    """MapleIdle 'Score Analysis' layout. For each member: name line, 'Lv. 116 - Class' line, then the
-    cells Best Score, CP at Score, vs all, vs class, Date. Returns {name: {score, cp, vs_all, vs_class, date}}."""
+    """MapleIdle 'Score Analysis' rows: name, 'Lv. 116 - Class', then Best Score, CP at Score, vs all,
+    vs class, Date. The Best Score is the first value after the name whose next line is a CP value.
+    Returns {name: {score, cp, vs_all, vs_class, date}}."""
     lines = [l.strip() for l in text.replace("\r", "").replace("\t", " \n").split("\n")]
     lines = [l for l in lines if l]
     lookup = {n.lower(): n for n in names}
@@ -153,17 +157,14 @@ def parse_scores(text, names):
         key = line.lower()
         if key not in lookup or lookup[key] in found:
             continue
-        j = i + 1
-        if j < len(lines) and lines[j].lower().startswith("lv"):
-            j += 1
-        cells = lines[j:j + 5]
-        v = score_value(cells[0]) if cells else None
-        if v is None:
-            continue
-        entry = {"score": v}
-        for k, c in zip(("cp", "vs_all", "vs_class", "date"), cells[1:]):
-            entry[k] = c
-        found[lookup[key]] = entry
+        for k in range(i + 1, min(i + 10, len(lines) - 1)):
+            v = score_value(lines[k])
+            if v is not None and CP_RE.fullmatch(lines[k + 1]):
+                entry = {"score": v}
+                for kk, c in zip(("cp", "vs_all", "vs_class", "date"), lines[k + 1:k + 5]):
+                    entry[kk] = c
+                found[lookup[key]] = entry
+                break
     return found
 
 
@@ -274,6 +275,14 @@ def refresh_fashion(members, today):
         old = {}
     # drop entries whose image file is missing (this is what caused the broken pictures)
     out = {k: v for k, v in old.items() if (FASHION_DIR / f"{k}.png").exists()}
+    for m in members:   # pictures uploaded by the browser helper count even if the list missed them
+        sl = m["name"].lower()
+        if sl not in out and (FASHION_DIR / f"{sl}.png").exists():
+            out[sl] = {"name": m["name"], "image": f"fashion/{sl}.png", "updated": today}
+    if not cfg.get("fetch_fashion", True):
+        json.dump(out, open(FASHION_JSON, "w"), indent=1)
+        print(f"fashion: downloading is off in config.json; {len(out)} pictures listed")
+        return
     saved = failed = 0
 
     # members with no picture yet go first, then the rest
@@ -350,10 +359,11 @@ if __name__ == "__main__":
     p = pathlib.Path("page.txt")
     if p.exists() and p.read_text(encoding="utf-8").strip():
         txt = p.read_text(encoding="utf-8")
-        h = hashlib.sha256(txt.encode()).hexdigest()
+        extra = "".join(f.read_text(encoding="utf-8") for f in sorted(pathlib.Path("scores").glob("*.txt")))
+        h = hashlib.sha256((txt + extra).encode()).hexdigest()
         lp = pathlib.Path("data/latest.json")
         last = json.load(open(lp)).get("page_hash") if lp.exists() else None
-        members = parse_members(txt)
+        members = parse_members(to_text(txt))
         if members and h != last:
             save(members, "page.txt", {"page_hash": h}); sys.exit()
         print("page.txt unchanged or unreadable; keeping existing data.")

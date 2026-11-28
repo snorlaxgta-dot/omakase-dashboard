@@ -276,7 +276,7 @@ __CATSECS__
   <p>Source: <a href="__SOURCE__">__GUILD__ on MapleIdle.gg</a>. The numbers refresh once a day.</p>
 </section>
 </div>
-<footer>Data from <a href="https://mapleidle.gg">MapleIdle.gg</a>. Unofficial fan site.</footer></div>
+<footer>Data from <a href="https://mapleidle.gg">MapleIdle.gg</a>. Unofficial fan site.<span id=adm hidden> &middot; <a href="#" id=rf>Refresh data</a></span></footer></div>
 <dialog id=pop></dialog>
 <script>
 const FASHION = __FASHION__;
@@ -307,6 +307,9 @@ q.oninput=filt;cf.onchange=filt;filt();
 const lq=document.getElementById('lq');
 lq.oninput=()=>{const s=lq.value.trim().toLowerCase();document.querySelectorAll('#lres [data-name]').forEach(x=>x.hidden=!!s&&!x.dataset.name.includes(s))};
 
+const REFRESH_URL=__REFRESHURL__;
+if(/[?&]admin\b/.test(location.search)){document.getElementById('adm').hidden=false;
+  document.getElementById('rf').onclick=e=>{e.preventDefault();window.open(REFRESH_URL,'_blank')}}
 const pop=document.getElementById('pop');
 const mk=(t,c,x)=>{const e=document.createElement(t);e.className=c;e.textContent=x;return e};
 document.addEventListener('click',e=>{const b=e.target.closest('.nm');if(!b)return;
@@ -325,7 +328,7 @@ page = TEMPLATE
 for tok, val in {
     "__GUILD__": E_(d["guild"]), "__SERVER__": E_(d["server"].title()), "__COUNT__": str(len(ms)),
     "__UPDATED__": E_(d["updated"]), "__SOURCE__": E_(d["source"]), "__NAVCATS__": nav_cats,
-    "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
+    "__REFRESHURL__": json.dumps(d["source"] + "#omakase-refresh"), "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
     "__ROLES__": roles, "__CLS__": cls_html, "__CATSECS__": cat_html, "__LOOKUP__": lookup,
     "__FASHION__": json.dumps(fashion)}.items():
     page = page.replace(tok, val)

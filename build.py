@@ -138,6 +138,20 @@ cat_html = (f"<section class=sec id=scores><h2 class=title>Score Analysis</h2>"
             f"<p class=sub>Each member's best score in every guild content. Pick a tab.</p>"
             f"<div class=tabs>{tab_links}</div>{panels}</section>")
 
+# ---- per-member scores for the popup
+scores_js = {}
+for m in ms:
+    prow = []
+    for key, label in CATS:
+        v = (m.get("scores") or {}).get(key)
+        if v is None:
+            continue
+        e = entry(v)
+        prow.append({"label": label, "score": score_text(e.get("score")), "cp": e.get("cp") or "",
+                     "vs_all": e.get("vs_all") or "", "vs_class": e.get("vs_class") or "", "date": e.get("date") or ""})
+    if prow:
+        scores_js[m["name"].lower()] = prow
+
 # ---- player lookup (guild members)
 lookup = "".join(f"<div class=lr data-name='{E_(m['name'].lower())}'>{btn(m)}"
                  f"<span>{E_(m['class'])} · Lv {m['level']} · {E_(m['cp_text'])}</span></div>" for m in ms)
@@ -203,6 +217,13 @@ td:nth-child(5){white-space:nowrap}
 .lr{background:linear-gradient(var(--wood),var(--wood2));border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;min-width:0}
 .lr span{color:var(--muted);font-size:13px}
 .about p{max-width:680px}
+dialog{max-height:90vh;overflow:auto;max-width:min(92vw,560px)}
+.pstw{margin:16px 0 4px;text-align:left}
+.pstt{font:700 12px Cinzel,Georgia,serif;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px;text-align:center}
+table.pst{width:100%;min-width:290px;font-size:13px}
+.pst th{font-size:10px;padding:6px 8px} .pst td{padding:5px 8px}
+.pst td.sc{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pstn{color:var(--muted);font-size:12px;margin:12px 0 0}
 .mrow{display:grid;grid-template-columns:clamp(100px,22vw,170px) 1fr auto;align-items:center;gap:12px;margin:7px 0}
 .mn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mt{height:16px;background:#2a1c14;border-radius:4px;overflow:hidden}
@@ -283,6 +304,7 @@ __CATSECS__
 <dialog id=pop></dialog>
 <script>
 const FASHION = __FASHION__;
+const SCORES = __SCORES__;
 const secs=[...document.querySelectorAll('.sec')],links=[...document.querySelectorAll('nav a[data-s]')];
 const TABS=[...document.querySelectorAll('.tabs a')],PANELS=[...document.querySelectorAll('.panel')],KEYS=TABS.map(a=>a.dataset.t);
 let lastTab=KEYS[0],cur=null;
@@ -315,9 +337,21 @@ if(/[?&]admin\b/.test(location.search)){document.getElementById('adm').hidden=fa
   document.getElementById('rf').onclick=e=>{e.preventDefault();window.open(REFRESH_URL,'_blank')}}
 const pop=document.getElementById('pop');
 const mk=(t,c,x)=>{const e=document.createElement(t);e.className=c;e.textContent=x;return e};
+function pcell(v){const td=document.createElement('td');td.textContent=v||'-';if(v)td.className=v.startsWith('-')?'neg':'pos';return td}
+function statsBlock(rows){const w=document.createElement('div');w.className='pstw';w.appendChild(mk('div','pstt','Guild content scores'));
+  const t=document.createElement('table');t.className='pst';
+  const h=t.createTHead().insertRow();['Content','Best score','vs all','vs class'].forEach(x=>{const th=document.createElement('th');th.textContent=x;h.appendChild(th)});
+  const tb=t.createTBody();
+  rows.forEach(r=>{const tr=tb.insertRow();tr.title=(r.cp?'CP at score: '+r.cp:'')+(r.date?' · '+r.date:'');
+    tr.insertCell().textContent=r.label;const s=tr.insertCell();s.textContent=r.score;s.className='sc';
+    tr.appendChild(pcell(r.vs_all));tr.appendChild(pcell(r.vs_class))});
+  w.appendChild(t);return w}
 document.addEventListener('click',e=>{const b=e.target.closest('.nm');if(!b)return;
   const nodes=[mk('h3','',b.dataset.n),mk('div','meta',b.dataset.c+' \\u00b7 Lv '+b.dataset.l),mk('div','big',b.dataset.cp),mk('div','meta','Combat Power \\u00b7 Rank #'+b.dataset.r)];
   const f=FASHION[(b.dataset.n||'').toLowerCase()];
+  if(b.closest('#lookup')){   // scores table only in the Player Lookup tab
+    const sc=SCORES[(b.dataset.n||'').toLowerCase()];
+    nodes.push(sc&&sc.length?statsBlock(sc):mk('p','pstn','No guild content scores collected for this player yet.'));}
   if(f&&f.image){const w=document.createElement('div');w.className='fit';
     const img=document.createElement('img');img.alt=b.dataset.n+"'s latest fit";img.src=f.image;
     const dt=mk('p','fitdate','Fit updated '+f.updated);
@@ -331,7 +365,7 @@ page = TEMPLATE
 for tok, val in {
     "__GUILD__": E_(d["guild"]), "__SERVER__": E_(d["server"].title()), "__COUNT__": str(len(ms)),
     "__UPDATED__": E_(d["updated"]), "__SOURCE__": E_(d["source"]), "__NAVCATS__": nav_cats,
-    "__REFRESHURL__": json.dumps(d["source"] + "#omakase-refresh"), "__BANNER__": E_(banner_src), "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
+    "__REFRESHURL__": json.dumps(d["source"] + "#omakase-refresh"), "__BANNER__": E_(banner_src), "__SCORES__": json.dumps(scores_js).replace("</", "<\\/"), "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
     "__ROLES__": roles, "__CLS__": cls_html, "__CATSECS__": cat_html, "__LOOKUP__": lookup,
     "__FASHION__": json.dumps(fashion)}.items():
     page = page.replace(tok, val)

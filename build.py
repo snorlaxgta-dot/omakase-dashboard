@@ -61,6 +61,13 @@ for k in range(hi, lo - 1, -1):
     dist += (f"<div class=hrow title='{label}: {c} member{'s' if c != 1 else ''}'><span class=lb>{label}</span>"
              f"<span class=tr><i class='{'' if c else 'zero'}' style='width:{w:.1f}%'></i></span><span class=ct>{c}</span></div>")
 
+# ---- per-member CP bars (every roster slot, ranked)
+mbars = "".join(
+    f"<div class=mrow><span class=mn>{btn(m)}</span>"
+    f"<span class=mt><i style='width:{max(1.5, m['cp']/mx*100):.1f}%'></i></span>"
+    f"<span class=mv>{E_(m['cp_text'])}</span></div>"
+    for m in sorted(ms, key=lambda m: -m["cp"]))
+
 # ---- guild titles and classes
 def bars(counter):
     top = counter.most_common()
@@ -194,6 +201,12 @@ td:nth-child(5){white-space:nowrap}
 .lr{background:linear-gradient(var(--wood),var(--wood2));border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;min-width:0}
 .lr span{color:var(--muted);font-size:13px}
 .about p{max-width:680px}
+.mrow{display:grid;grid-template-columns:clamp(100px,22vw,170px) 1fr auto;align-items:center;gap:12px;margin:7px 0}
+.mn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt{height:16px;background:#2a1c14;border-radius:4px;overflow:hidden}
+.mt i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--maple),var(--gold))}
+.mv{color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;min-width:92px}
+h3.sh{font:700 15px Cinzel,Georgia,serif;letter-spacing:.08em;color:var(--gold2);margin:26px 0 2px}
 .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 16px}
 .tabs a{padding:7px 14px;border:1px solid var(--line);border-radius:999px;color:var(--ink);background:var(--wood2);white-space:nowrap}
 .tabs a:hover{background:#33221a;text-decoration:none}
@@ -237,7 +250,9 @@ dialog h3{margin:0 0 4px;color:var(--gold);font:700 26px Cinzel,Georgia,serif} d
   <img class=banner src="omakase-banner.jpg" width=1672 height=941 alt="The Omakase guild hall in autumn Henesys at sunset, with five guildmates on the balcony and a slime in the square">
   <h2 class=title>Guild Overview</h2><p class=sub>__SERVER__ · updated __UPDATED__</p>
   <div class=cards>__CARDS__</div>
-  <h2 class=h>CP Distribution</h2><p class=hint>Members per Combat Power bracket. Each bracket is twice the size of the one below it.</p>
+  <h2 class=h>CP Distribution</h2><p class=hint>Every roster slot, ranked. Click a name for details.</p>
+  <div>__MBARS__</div>
+  <h3 class=sh>CP brackets</h3><p class=hint>Members per Combat Power bracket. Each bracket is twice the size of the one below it.</p>
   <div>__DIST__</div>
   <h2 class=h>All Members by CP</h2><p class=hint>Click a name for details. Click a column heading to sort.</p>
   <div class=tools><input type=search id=q placeholder="Search character" aria-label="Search character">
@@ -310,7 +325,7 @@ page = TEMPLATE
 for tok, val in {
     "__GUILD__": E_(d["guild"]), "__SERVER__": E_(d["server"].title()), "__COUNT__": str(len(ms)),
     "__UPDATED__": E_(d["updated"]), "__SOURCE__": E_(d["source"]), "__NAVCATS__": nav_cats,
-    "__CARDS__": cards, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
+    "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
     "__ROLES__": roles, "__CLS__": cls_html, "__CATSECS__": cat_html, "__LOOKUP__": lookup,
     "__FASHION__": json.dumps(fashion)}.items():
     page = page.replace(tok, val)

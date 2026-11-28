@@ -5,6 +5,7 @@ Per-member category scores live in data/latest.json as
 (scrape.py fills these in when config.json has "score_pages"); the matching pages fill in by themselves.
 """
 import json, glob, html, statistics, collections, math, os
+BANNER = "omakase-banner.jpg"   # file inside the docs/ folder; change this if you upload a new name
 d = json.load(open("data/latest.json")); ms = d["members"]
 fashion = json.load(open("data/fashion.json")) if os.path.exists("data/fashion.json") else {}
 # only show pictures whose file really exists, and bust the browser cache so new fits show up daily
@@ -12,6 +13,7 @@ fashion = {k: dict(v) for k, v in fashion.items() if os.path.exists("docs/" + v[
 for v in fashion.values():
     v["image"] += "?v=" + v["updated"]
 E_ = html.escape
+banner_src = BANNER + (f"?v={int(os.path.getmtime('docs/' + BANNER))}" if os.path.exists("docs/" + BANNER) else "")
 
 def fmt(t):
     for u, v in (("AC",10**9),("AB",10**6),("AA",1000),("T",1)):
@@ -165,7 +167,7 @@ nav a.on{background:#3a2616;color:var(--gold);border-left-color:var(--gold);font
 .content{flex:1;min-width:0}
 .inner{max-width:1020px;margin:0 auto;padding:22px 28px 10px}
 .sec{display:none} .sec.on{display:block}
-.banner{display:block;width:100%;max-width:560px;height:auto;margin:0 auto 6px;border:2px solid var(--gold2);border-radius:16px;box-shadow:0 12px 40px #000a,0 0 0 5px #2d1d15}
+.banner{display:block;width:100%;height:auto;aspect-ratio:3/1;object-fit:cover;object-position:center;margin:0 auto 6px;border:2px solid var(--gold2);border-radius:16px;box-shadow:0 12px 40px #000a,0 0 0 5px #2d1d15}
 .title{margin:18px 0 2px;font:700 28px/1.2 Cinzel,Georgia,serif;letter-spacing:.06em;color:var(--gold)}
 .sub{margin:0 0 6px;color:var(--muted)}
 .note{background:var(--wood2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;color:var(--muted);max-width:640px}
@@ -230,6 +232,7 @@ dialog h3{margin:0 0 4px;color:var(--gold);font:700 26px Cinzel,Georgia,serif} d
   nav a.on{border-color:var(--gold)}
   .inner{padding:16px 14px 6px} footer{padding:6px 14px 40px}
   .title{font-size:24px}
+  .banner{aspect-ratio:2/1}
 }
 </style>
 <aside>
@@ -247,7 +250,7 @@ dialog h3{margin:0 0 4px;color:var(--gold);font:700 26px Cinzel,Georgia,serif} d
 </aside>
 <div class=content><div class=inner>
 <section class="sec on" id=home>
-  <img class=banner src="omakase-banner.jpg" width=1672 height=941 alt="The Omakase guild hall in autumn Henesys at sunset, with five guildmates on the balcony and a slime in the square">
+  <img class=banner src="__BANNER__" alt="__GUILD__ guild banner">
   <h2 class=title>Guild Overview</h2><p class=sub>__SERVER__ · updated __UPDATED__</p>
   <div class=cards>__CARDS__</div>
   <h2 class=h>CP Distribution</h2><p class=hint>Every roster slot, ranked. Click a name for details.</p>
@@ -328,7 +331,7 @@ page = TEMPLATE
 for tok, val in {
     "__GUILD__": E_(d["guild"]), "__SERVER__": E_(d["server"].title()), "__COUNT__": str(len(ms)),
     "__UPDATED__": E_(d["updated"]), "__SOURCE__": E_(d["source"]), "__NAVCATS__": nav_cats,
-    "__REFRESHURL__": json.dumps(d["source"] + "#omakase-refresh"), "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
+    "__REFRESHURL__": json.dumps(d["source"] + "#omakase-refresh"), "__BANNER__": E_(banner_src), "__CARDS__": cards, "__MBARS__": mbars, "__DIST__": dist, "__CLSOPTS__": cls_opts, "__ROWS__": rows,
     "__ROLES__": roles, "__CLS__": cls_html, "__CATSECS__": cat_html, "__LOOKUP__": lookup,
     "__FASHION__": json.dumps(fashion)}.items():
     page = page.replace(tok, val)
